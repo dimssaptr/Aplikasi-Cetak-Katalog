@@ -2,305 +2,311 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Aplikasi Cetak Katalog Perpustakaan</title>
+    <title>Sistem Cetak Katalog - Layout Fixed</title>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.0/dist/JsBarcode.all.min.js"></script>
     <style>
-        /* --- CSS TAMPILAN MONITOR --- */
-        body { font-family: 'Segoe UI', sans-serif; background: #eef2f5; padding: 20px; }
-        .container { max-width: 850px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        /* --- TAMPILAN MONITOR --- */
+        body { font-family: 'Segoe UI', sans-serif; background: #eef2f5; margin: 0; padding: 20px; padding-bottom: 100px; }
+        
+        .container { 
+            max-width: 850px; margin: 0 auto 30px auto; 
+            background: white; padding: 25px; border-radius: 8px; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
+        }
+        
         h2 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; margin-top: 0; }
-
         .form-row { display: flex; gap: 15px; margin-bottom: 12px; }
         .form-col { flex: 1; }
         label { display: block; font-weight: 600; font-size: 13px; margin-bottom: 5px; color: #34495e; }
         input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        
-        .action-area { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
-        button { padding: 12px 20px; border: none; cursor: pointer; color: white; border-radius: 5px; font-weight: bold; transition: 0.2s; }
-        button:hover { opacity: 0.9; }
-        .btn-kartu { background-color: #2980b9; } 
-        .btn-gabung { background-color: #27ae60; } 
-        .btn-label { background-color: #f39c12; color: #fff; } 
-        .btn-barcode { background-color: #7f8c8d; } 
 
-        /* --- CSS CETAK (PRINT) --- */
+        /* Input khusus Custom */
+        #customTypeInput { margin-top: 5px; background: #fffbe6; border-color: #f1c40f; display: none; }
+
+        .action-area { margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; }
+        .btn-add { padding: 10px 15px; border: none; cursor: pointer; color: white; border-radius: 4px; font-weight: bold; margin: 5px; }
+        .btn-add:hover { opacity: 0.9; transform: translateY(-1px); }
+        .c-blue { background: #2980b9; }
+        .c-green { background: #27ae60; }
+        .c-orange { background: #f39c12; }
+        .c-grey { background: #7f8c8d; }
+
+        /* --- AREA PREVIEW --- */
+        #preview-section {
+            max-width: 21cm; margin: 0 auto; background: #fff; min-height: 200px;
+            padding: 20px; border: 2px dashed #bbb; display: flex; flex-wrap: wrap;
+            align-content: flex-start; gap: 10px; 
+        }
+        .placeholder-text { width: 100%; text-align: center; color: #aaa; padding-top: 50px; font-style: italic; }
+
+        .print-bar {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            background: #2c3e50; color: white; padding: 15px;
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.2); z-index: 1000;
+        }
+        .btn-print-all { background: white; color: #2c3e50; border: none; padding: 10px 25px; font-weight: bold; font-size: 12pt; cursor: pointer; border-radius: 4px; margin-right: 30px; }
+        .btn-reset { background: #c0392b; color: white; border: none; padding: 10px 20px; font-weight: bold; cursor: pointer; border-radius: 4px; }
+
+        /* --- CSS PRINT --- */
         @media print {
-            body * { visibility: hidden; }
-            #print-area, #print-area * { visibility: visible; }
-            #print-area { position: absolute; left: 0; top: 0; width: 100%; }
-            .container { display: none; }
+            body { background: white; padding: 0; margin: 0; }
+            .container, .print-bar, .delete-btn { display: none !important; }
+            #preview-section { border: none; width: 100%; max-width: 100%; margin: 0; padding: 0; display: block; }
+            .print-item-wrapper { float: left; margin: 5px; page-break-inside: avoid; }
             @page { margin: 0.5cm; size: auto; }
         }
 
-        /* 1. KARTU INDUK (12cm x 9.5cm) */
+        .print-item-wrapper { position: relative; display: inline-block; vertical-align: top; margin: 5px; }
+        .delete-btn {
+            position: absolute; top: -8px; right: -8px;
+            background: red; color: white; border-radius: 50%;
+            width: 20px; height: 20px; text-align: center; line-height: 20px;
+            cursor: pointer; font-weight: bold; font-size: 12px;
+            border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); z-index: 10;
+        }
+
+        /* --- KARTU INDUK --- */
         .kartu-induk {
-            width: 12cm;
-            height: 9.5cm;
-            border: 1px solid black;
-            padding: 0.5cm;
-            font-family: "Times New Roman", serif;
-            font-size: 11pt; 
-            background: white;
-            box-sizing: border-box;
-            margin-bottom: 20px;
+            width: 12cm; height: 9.5cm; border: 1px solid black; padding: 15px;
+            font-family: "Times New Roman", serif; font-size: 11pt;
+            background: white; box-sizing: border-box; overflow: hidden;
+            display: flex; flex-direction: column; justify-content: space-between; 
         }
-        .header-top { font-size: 9pt; margin-bottom: 5px; display: flex; justify-content: space-between; color: #555; }
-        .inst-title { text-align: center; font-weight: bold; font-size: 11pt; margin-bottom: 10px; text-transform: uppercase; line-height: 1.2; }
-        
-        .tbl-data { width: 100%; border-collapse: collapse; }
-        .tbl-data td { vertical-align: top; padding: 2px 0; }
-        .col-label { width: 23%; font-weight: bold; white-space: nowrap; }
-        .col-sep { width: 2%; text-align: center; }
-        .col-value { width: 75%; border-bottom: 1px dotted #999; }
-        
-        /* Baris Gabungan Proporsional */
-        .split-row { display: flex; align-items: center; }
-        .split-item { flex: 1; display: flex; } 
-        .split-label { font-weight: bold; margin-right: 5px; font-size: 10pt; }
-        .dual-lang { font-size: 8pt; font-style: italic; font-weight: normal; color: #666; margin-left: 3px; }
+        .tbl-data { width: 100%; border-collapse: collapse; flex-grow: 1; margin-top: 10px; }
+        .tbl-data td { vertical-align: top; padding: 5px 0; }
+        .col-lbl { font-weight: bold; width: 22%; } 
+        .col-sep { width: 2%; text-align: center; } 
+        .col-val { width: 76%; border-bottom: 1px dotted #ccc; }
+        .row-flex { display: flex; gap: 10px; } .flex-item { flex: 1; }
 
-        /* 2. LABEL & BARCODE (MENYATU) */
+        /* --- LABEL & BARCODE --- */
+        .sticker-unit { display: inline-flex; border: 1px dashed #ccc; padding: 3px; background: white; align-items: center; gap: 3px; }
+        .spine-label { width: 3cm; height: 4cm; border: 1px solid black; display: flex; flex-direction: column; text-align: center; }
+        .color-strip { height: 12px; border-bottom: 1px solid #ccc; width: 100%; -webkit-print-color-adjust: exact; }
+        .lbl-content { flex: 1; display: flex; flex-direction: column; justify-content: center; font-weight: bold; font-family: Arial; }
         
-        /* Wadah Utama Penyatuan */
-        .sticker-unit {
-            display: inline-flex; /* Menyamping */
-            border: 1px dashed #ccc; /* Garis bantu potong luar */
-            padding: 5px;
-            background: white;
-            align-items: center;
-            gap: 5px; /* Jarak tipis antara label dan barcode */
-        }
-
-        /* Bagian Label (Kiri) */
-        .spine-label {
-            width: 3cm;
-            height: 4cm;
-            border: 1px solid black;
-            display: flex;
-            flex-direction: column;
-            text-align: center;
-            box-sizing: border-box;
-        }
-        .color-strip { height: 15px; border-bottom: 1px solid #ccc; width: 100%; -webkit-print-color-adjust: exact; }
-        .label-body { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; font-family: Arial, sans-serif; font-weight: bold; font-size: 12pt; }
-
-        /* Bagian Barcode (Kanan) */
-        .barcode-wrap {
-            width: 4.5cm;
-            height: 4cm; /* Samakan tinggi dengan label agar rapi */
-            border: 1px solid black; /* Border penuh agar terlihat sebagai kotak terpisah namun menyatu */
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            box-sizing: border-box;
-            padding: 5px;
-        }
-        .barcode-wrap svg { width: 90%; height: 50px; }
-        .bc-text { font-family: Arial; font-size: 9pt; margin-top: 5px; word-break: break-all; line-height: 1.1; }
+        .barcode-box { width: 4.5cm; height: 4cm; border: 1px solid black; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 2px; }
+        .barcode-box svg { width: 100%; height: auto; max-height: 60px; display: block; } 
 
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Input Katalog & Label Perpustakaan</h2>
-    
+    <h2>Aplikasi Cetak Katalog</h2>
+    <div style="font-size:12px; color:#666; margin-bottom:15px;">Silakan isi sesuai dengan metadata buku nya.</div>
+
     <div class="form-row">
-        <div class="form-col">
-            <label>Jenis Koleksi</label>
-            <select id="type">
+        <div class="form-col"><label>Jenis Koleksi</label>
+            <select id="type" onchange="toggleCustomInput()">
                 <option value="a">a. Textbook</option>
                 <option value="b">b. Reference</option>
                 <option value="c">c. Catalog</option>
                 <option value="d">d. Journal</option>
                 <option value="e">e. Periodical</option>
+                <option value="f">f. Lainnya (Tulis Sendiri)</option>
             </select>
+            <input type="text" id="customTypeInput" placeholder="Ketik jenis koleksi (Misal: Skripsi)...">
         </div>
-        <div class="form-col"><label>Klasifikasi (DDC)</label><input type="text" id="classNo" placeholder="Contoh: 621.3"></div>
-        <div class="form-col"><label>Call Number</label><input type="text" id="callNo" placeholder="Contoh: 621.3 SUH t"></div>
+        <div class="form-col"><label>DDC</label><input type="text" id="classNo" placeholder="600"></div>
+        <div class="form-col"><label>Call No</label><input type="text" id="callNo" placeholder="600 ABC t"></div>
     </div>
-
     <div class="form-row">
-        <div class="form-col"><label>Penulis (Author)</label><input type="text" id="author"></div>
-        <div class="form-col" style="flex:2;"><label>Judul (Title)</label><input type="text" id="title"></div>
+        <div class="form-col"><label>Penulis</label><input type="text" id="author"></div>
+        <div class="form-col" style="flex:2;"><label>Judul</label><input type="text" id="title"></div>
     </div>
-
     <div class="form-row">
-        <div class="form-col"><label>Jilid (Part)</label><input type="text" id="part"></div>
-        <div class="form-col"><label>Tahun (Year)</label><input type="text" id="year"></div>
-        <div class="form-col"><label>Edisi (Edition)</label><input type="text" id="edition"></div>
+        <div class="form-col"><label>Jilid</label><input type="text" id="part"></div>
+        <div class="form-col"><label>Tahun</label><input type="text" id="year"></div>
+        <div class="form-col"><label>Edisi</label><input type="text" id="edition"></div>
     </div>
-
     <div class="form-row">
-        <div class="form-col"><label>Harga (Price)</label><input type="text" id="price"></div>
-        <div class="form-col"><label>Tanggal (Date)</label><input type="date" id="date"></div>
-        <div class="form-col"><label>Sumber (Resource)</label><input type="text" id="resource"></div>
+        <div class="form-col"><label>Harga</label><input type="text" id="price"></div>
+        <div class="form-col"><label>Tanggal</label><input type="date" id="date"></div>
+        <div class="form-col"><label>Sumber</label><input type="text" id="resource"></div>
     </div>
-
     <div class="form-row">
-        <div class="form-col"><label>Penerbit (Publisher)</label><input type="text" id="publisher"></div>
-        <div class="form-col"><label>Kota Terbit</label><input type="text" id="city"></div>
+        <div class="form-col"><label>Penerbit</label><input type="text" id="publisher"></div>
+        <div class="form-col"><label>Kota</label><input type="text" id="city"></div>
     </div>
-
     <div class="form-row">
-        <div class="form-col"><label>Ukuran (Measure)</label><input type="text" id="measure"></div>
-        <div class="form-col"><label>Halaman (Pages)</label><input type="text" id="pages"></div>
+        <div class="form-col"><label>Ukuran</label><input type="text" id="measure"></div>
+        <div class="form-col"><label>Halaman</label><input type="text" id="pages"></div>
     </div>
-
-    <div class="form-row" style="background: #eafaf1; padding: 10px; border-radius: 5px;">
-        <div class="form-col"><label>No. Rek (ACC No) *Wajib utk Barcode</label><input type="text" id="accNo"></div>
+    <div class="form-row" style="background:#f0f8ff; padding:10px; border-radius:5px; border: 1px solid #b3d7ff;">
+        <div class="form-col">
+            <label style="color:#d35400;">No. Rek (ACC) *Wajib Barcode</label>
+            <input type="text" id="accNo" placeholder="Contoh: 12345/Pust/2024">
+        </div>
         <div class="form-col"><label>ISBN</label><input type="text" id="isbn"></div>
         <div class="form-col"><label>Invoice</label><input type="text" id="invoice"></div>
     </div>
 
     <div class="action-area">
-        <button class="btn-kartu" onclick="printData('kartu')">🖨️ Kartu Induk</button>
-        <button class="btn-gabung" onclick="printData('gabung')">🖨️ Label + Barcode (Menyatu)</button>
-        <button class="btn-label" onclick="printData('label')">🖨️ Label Saja</button>
-        <button class="btn-barcode" onclick="printData('barcode')">🖨️ Barcode Saja</button>
+        <button class="btn-add c-blue" onclick="addQueue('kartu')">+ Kartu Induk</button>
+        <button class="btn-add c-green" onclick="addQueue('gabung')">+ Label & Barcode (Menyatu)</button>
+        <button class="btn-add c-orange" onclick="addQueue('label')">+ Label Saja</button>
+        <button class="btn-add c-grey" onclick="addQueue('barcode')">+ Barcode Saja</button>
     </div>
 </div>
 
-<div id="print-area"></div>
+<h3 style="text-align:center; color:#555;">Preview Kertas A4 (Hasil Cetak)</h3>
+<div id="preview-section">
+    <div class="placeholder-text">Data yang Anda tambah akan muncul di sini...</div>
+</div>
+
+<div class="print-bar">
+    <div style="padding-left:20px; font-weight:bold;">Jumlah Antrean: <span id="count">0</span></div>
+    <div>
+        <button class="btn-reset" onclick="location.reload()">Reset Semua</button>
+        <button class="btn-print-all" onclick="window.print()">🖨️ CETAK SEMUA SEKARANG</button>
+    </div>
+</div>
 
 <script>
+    let qCount = 0;
     function getVal(id) { return document.getElementById(id).value || "-"; }
+
+    function toggleCustomInput() {
+        const typeSelect = document.getElementById('type');
+        const customInput = document.getElementById('customTypeInput');
+        if(typeSelect.value === 'f') {
+            customInput.style.display = 'block';
+            customInput.focus();
+        } else {
+            customInput.style.display = 'none';
+            customInput.value = ''; 
+        }
+    }
 
     function getDDCColor(code) {
         if(!code) return "#fff";
         const c = code.charAt(0);
-        const colors = {
-            '0': '#8B4513', '1': '#800080', '2': '#FFA500', '3': '#006400', 
-            '4': '#FFC0CB', '5': '#000000', '6': '#FF0000', '7': '#8B0000', 
-            '8': '#FFFF00', '9': '#FFFFFF'
-        };
-        return colors[c] || "#fff";
+        const map = {'0':'#8B4513','1':'#800080','2':'#FFA500','3':'#006400','4':'#FFC0CB','5':'#000000','6':'#FF0000','7':'#8B0000','8':'#FFFF00','9':'#FFFFFF'};
+        return map[c] || "#fff";
     }
 
-    function truncate(str, n) {
-        return (str.split(" ").slice(0, n).join(" ")) + (str.split(" ").length > n ? "..." : "");
-    }
+    function addQueue(mode) {
+        const rawAcc = document.getElementById('accNo').value;
 
-    function printData(mode) {
+        if((mode === 'gabung' || mode === 'barcode') && !rawAcc) {
+            alert("MAAF: Kolom 'No. Rek (ACC)' Wajib diisi untuk membuat Barcode!");
+            document.getElementById('accNo').focus();
+            return;
+        }
+
         const d = {
-            type: getVal('type'), classNo: getVal('classNo'), author: getVal('author'),
+            type: getVal('type'), 
+            classNo: getVal('classNo'), author: getVal('author'),
             title: getVal('title'), part: getVal('part'), year: getVal('year'),
             edition: getVal('edition'), price: getVal('price'), date: getVal('date'),
             resource: getVal('resource'), publisher: getVal('publisher'), city: getVal('city'),
-            measure: getVal('measure'), pages: getVal('pages'), accNo: document.getElementById('accNo').value,
+            measure: getVal('measure'), pages: getVal('pages'), 
+            accNo: rawAcc || "-", 
             isbn: getVal('isbn'), invoice: getVal('invoice')
         };
 
-        const area = document.getElementById('print-area');
-        area.innerHTML = "";
+        const section = document.getElementById('preview-section');
+        if(section.querySelector('.placeholder-text')) section.innerHTML = "";
 
-        // --- HTML ELEMENTS ---
-        
-        // 1. Kartu Induk
-        const types = { a:"Textbook", b:"Reference", c:"Catalog", d:"Journal", e:"Periodical" };
-        let typeStr = Object.keys(types).map(k => 
-            `<span style="${k===d.type?'font-weight:bold;text-decoration:underline;color:black':'color:#bbb'}">${k}. ${types[k]}</span>`
-        ).join("&nbsp; ");
+        const uid = "item-" + Date.now();
+        let htmlContent = "";
 
-        const htmlKartu = `
-        <div class="kartu-induk">
-            <div class="header-top">${typeStr} <span>f.....</span></div>
-            <div class="inst-title">UPT PERPUSTAKAAN<br>POLITEKNIK NEGERI BANDUNG</div>
-            <table class="tbl-data">
-                <tr><td class="col-label">Penulis<span class="dual-lang">Author</span></td><td class="col-sep">:</td><td class="col-value">${d.author}</td></tr>
-                <tr><td class="col-label">Judul<span class="dual-lang">Title</span></td><td class="col-sep">:</td><td class="col-value">${d.title}</td></tr>
-                <tr>
-                    <td class="col-label">Ket. Terbit<span class="dual-lang">Desc</span></td><td class="col-sep">:</td>
-                    <td class="col-value">
-                        <div class="split-row">
-                            <div class="split-item"><span class="split-label">Jilid:</span>${d.part}</div>
-                            <div class="split-item"><span class="split-label">Thn:</span>${d.year}</div>
-                            <div class="split-item"><span class="split-label">Ed:</span>${d.edition}</div>
-                        </div>
-                    </td>
-                </tr>
-                <tr><td class="col-label">Penerbit<span class="dual-lang">Pub.</span></td><td class="col-sep">:</td><td class="col-value">${d.publisher}, ${d.city}</td></tr>
-                <tr>
-                    <td class="col-label">Inventaris<span class="dual-lang">Inv</span></td><td class="col-sep">:</td>
-                    <td class="col-value">
-                        <div class="split-row">
-                            <div class="split-item"><span class="split-label">Rp:</span>${d.price}</div>
-                            <div class="split-item"><span class="split-label">Tgl:</span>${d.date}</div>
-                            <div class="split-item"><span class="split-label">Src:</span>${d.resource}</div>
-                        </div>
-                    </td>
-                </tr>
-                <tr>
-                    <td class="col-label">Fisik<span class="dual-lang">Phys</span></td><td class="col-sep">:</td>
-                    <td class="col-value">
-                        <div class="split-row">
-                            <div class="split-item"><span class="split-label">Ukr:</span>${d.measure}</div>
-                            <div class="split-item"><span class="split-label">Hlm:</span>${d.pages}</div>
-                        </div>
-                    </td>
-                </tr>
-                <tr><td class="col-label">ACC / ISBN</td><td class="col-sep">:</td><td class="col-value"><b>${d.accNo}</b> / ${d.isbn}</td></tr>
-                <tr><td class="col-label">Invoice</td><td class="col-sep">:</td><td class="col-value">${d.invoice}</td></tr>
-            </table>
-        </div>`;
+        // --- 1. KARTU INDUK ---
+        if (mode === 'kartu') {
+            let types = {a:"Textbook", b:"Reference", c:"Catalog", d:"Journal", e:"Periodical"};
+            
+            // LOGIKA HEADER:
+            // Opsi f dimasukkan ke dalam objek types agar posisinya setelah e
+            if (d.type === 'f') {
+                // Jika pilih F, isinya sesuai input user
+                const customText = document.getElementById('customTypeInput').value || "Lainnya";
+                types['f'] = customText;
+            } else {
+                // Jika TIDAK pilih F, tampilkan placeholder titik-titik
+                types['f'] = ".....";
+            }
 
-        // 2. Label Punggung
+            // Generate string header menjadi satu kesatuan
+            // Menggunakan &nbsp; (spasi) sebagai pemisah
+            let typeStr = Object.keys(types).map(k => 
+                `<span style="white-space:nowrap; ${k===d.type?'font-weight:bold;text-decoration:underline;color:black':'color:#bbb'}">${k}. ${types[k]}</span>`
+            ).join("&nbsp;&nbsp; ");
+            
+            htmlContent = `
+            <div class="kartu-induk">
+                <div style="font-size:9pt; width:100%;">
+                    ${typeStr}
+                </div>
+                
+                <div style="text-align:center;font-weight:bold;margin: 10px 0;">UPT PERPUSTAKAAN<br>POLITEKNIK NEGERI BANDUNG</div>
+                <table class="tbl-data">
+                    <tr><td class="col-lbl">Penulis</td><td class="col-sep">:</td><td class="col-val">${d.author}</td></tr>
+                    <tr><td class="col-lbl">Judul</td><td class="col-sep">:</td><td class="col-val">${d.title}</td></tr>
+                    <tr><td class="col-lbl">Ket. Terbit</td><td class="col-sep">:</td><td class="col-val"><div class="row-flex"><div class="flex-item"><b>Jld:</b> ${d.part}</div><div class="flex-item"><b>Thn:</b> ${d.year}</div><div class="flex-item"><b>Ed:</b> ${d.edition}</div></div></td></tr>
+                    <tr><td class="col-lbl">Penerbit</td><td class="col-sep">:</td><td class="col-val">${d.publisher}, ${d.city}</td></tr>
+                    <tr><td class="col-lbl">Inventaris</td><td class="col-sep">:</td><td class="col-val"><div class="row-flex"><div class="flex-item"><b>Rp:</b> ${d.price}</div><div class="flex-item"><b>Tgl:</b> ${d.date}</div><div class="flex-item"><b>Src:</b> ${d.resource}</div></div></td></tr>
+                    <tr><td class="col-lbl">Fisik</td><td class="col-sep">:</td><td class="col-val"><div class="row-flex"><div class="flex-item"><b>Ukr:</b> ${d.measure}</div><div class="flex-item"><b>Hlm:</b> ${d.pages}</div></div></td></tr>
+                    <tr><td class="col-lbl">ACC/ISBN</td><td class="col-sep">:</td><td class="col-val"><b>${d.accNo}</b> / ${d.isbn}</td></tr>
+                    <tr><td class="col-lbl">Invoice</td><td class="col-sep">:</td><td class="col-val">${d.invoice}</td></tr>
+                </table>
+            </div>`;
+        }
+
+        // --- 2. LABEL & BARCODE ---
         const color = getDDCColor(d.classNo);
-        const htmlLabel = `
+        const titleShort = (d.title.length > 15) ? d.title.substring(0,15)+"..." : d.title;
+
+        const elLabel = `
             <div class="spine-label">
                 <div class="color-strip" style="background:${color} !important;"></div>
-                <div class="label-body">
-                    <div>POLBAN</div><br>
-                    <div style="font-size:16pt;">${d.classNo}</div>
-                    <div style="text-transform:uppercase;">${d.author.substring(0,3)}</div>
-                    <div style="text-transform:lowercase;">${d.title.substring(0,1)}</div>
+                <div class="lbl-content">
+                    <div>POLBAN</div><br><div style="font-size:14pt;">${d.classNo}</div>
+                    <div style="text-transform:uppercase;">${d.author.substring(0,3)}</div><div style="text-transform:lowercase;">${d.title.substring(0,1)}</div>
                 </div>
             </div>`;
 
-        // 3. Barcode
-        const shortTitle = truncate(d.title, 10);
-        const htmlBarcode = `
-            <div class="barcode-wrap">
-                <div style="font-size:8pt;margin-bottom:2px;">UPT Perpustakaan Polban</div>
-                <svg id="bc-svg"></svg>
-                <div class="bc-text">${shortTitle}</div>
+        const elBarcode = `
+            <div class="barcode-box">
+                <div style="font-size:7pt;">UPT Perpustakaan</div>
+                <svg class="barcode-svg" id="bc-${uid}"></svg>
+                <div style="font-size:8pt;margin-top:2px;">${titleShort}</div>
             </div>`;
 
-        // --- LOGIKA OUTPUT ---
+        if (mode === 'gabung') htmlContent = `<div class="sticker-unit">${elLabel}${elBarcode}</div>`;
+        else if (mode === 'label') htmlContent = elLabel;
+        else if (mode === 'barcode') htmlContent = elBarcode;
 
-        if (mode === 'kartu') {
-            area.innerHTML = htmlKartu;
-        } 
-        else if (mode === 'gabung') {
-            // Bungkus dalam satu container agar MENYATU
-            area.innerHTML = `
-                <div class="sticker-unit">
-                    ${htmlLabel}
-                    ${htmlBarcode}
-                </div>`;
-            renderBC(d.accNo);
-        } 
-        else if (mode === 'label') {
-            area.innerHTML = `<div style="padding:10px;">${htmlLabel}</div>`;
-        } 
-        else if (mode === 'barcode') {
-            area.innerHTML = `<div style="padding:10px;">${htmlBarcode}</div>`;
-            renderBC(d.accNo);
+        const wrapper = document.createElement('div');
+        wrapper.className = 'print-item-wrapper';
+        wrapper.id = uid;
+        wrapper.innerHTML = `<div class="delete-btn" onclick="removeQ('${uid}')">X</div>` + htmlContent;
+
+        section.appendChild(wrapper);
+
+        // Barcode Rendering
+        if(mode !== 'kartu' && mode !== 'label' && rawAcc) {
+            setTimeout(() => {
+                try { 
+                    JsBarcode("#bc-"+uid, rawAcc, {
+                        format: "CODE128", width: 2, height: 40, displayValue: true, fontSize: 12, margin: 0
+                    }); 
+                } catch(e) {
+                    document.getElementById("bc-"+uid).outerHTML = "<div style='color:red;font-size:10px'>Error Barcode</div>";
+                }
+            }, 100);
         }
 
-        setTimeout(() => { window.print(); }, 500);
+        qCount++;
+        document.getElementById('count').innerText = qCount;
     }
 
-    function renderBC(val) {
-        if(val && val !== "-") {
-            try {
-                JsBarcode("#bc-svg", val, {
-                    format: "CODE128", width: 2, height: 45, displayValue: true, margin: 0
-                });
-            } catch(e) { console.log(e); }
-        }
+    function removeQ(id) {
+        document.getElementById(id).remove();
+        qCount--;
+        if(qCount < 0) qCount = 0;
+        document.getElementById('count').innerText = qCount;
     }
 </script>
 
