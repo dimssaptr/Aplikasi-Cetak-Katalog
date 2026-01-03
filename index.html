@@ -2,642 +2,684 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>BiblioPrint - V1</title>
+    <title>BiblioPrint</title>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.0/dist/JsBarcode.all.min.js"></script>
     <style>
-        /* --- CSS UTAMA --- */
-        body { font-family: 'Segoe UI', sans-serif; background: #eef2f5; margin: 0; padding: 20px; padding-bottom: 150px; }
-        .container { max-width: 98%; margin: 0 auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        h2 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; margin-top: 0; display: flex; justify-content: space-between; align-items: center; }
+        /* --- 1. GLOBAL STYLES --- */
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #eef2f5; margin: 0; padding: 20px 20px 160px 20px; color: #333; }
+        .container { max-width: 1350px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         
-        input, select { padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 13px; width: 100%; }
-        .form-row { display: flex; gap: 10px; margin-bottom: 10px; }
-        .form-col { flex: 1; }
-        label { display: block; font-weight: 600; font-size: 12px; margin-bottom: 4px; color: #34495e; }
+        h2 { margin-top: 0; color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
 
-        .io-box { background: #e8f8f5; border: 1px solid #a2d9ce; padding: 15px; border-radius: 5px; margin-bottom: 20px; display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
-        #settings-box { display: none; background: #f8f9fa; border: 1px solid #ced4da; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+        /* --- 2. INPUTS --- */
+        .io-box { background: #f8f9fa; border: 1px solid #dee2e6; padding: 25px; border-radius: 8px; margin-bottom: 25px; display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; }
+        .form-box { padding: 25px; background: #fff; border: 1px solid #ddd; border-radius: 8px; margin-top: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .form-row { display: flex; gap: 15px; margin-bottom: 15px; }
+        .form-col { flex: 1; display: flex; flex-direction: column; }
+        label { font-size: 11px; font-weight: 700; color: #555; margin-bottom: 8px; text-transform: uppercase; }
+        input, select, textarea { padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 13px; width: 100%; box-sizing: border-box; height: 40px; background: #fff; transition: border 0.3s; }
+        input:focus, select:focus { border-color: #3498db; outline: none; box-shadow: 0 0 0 3px rgba(52,152,219,0.1); }
+        .highlight-row { background: #fff8e1; padding: 15px; border: 1px dashed #f1c40f; border-radius: 6px; margin-bottom: 15px; display: flex; gap: 15px; }
 
-        /* --- STAGING TABLE --- */
-        .staging-wrapper { max-height: 500px; overflow: auto; border: 1px solid #ccc; margin-bottom: 15px; background: white; }
-        .staging-table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 1200px; }
-        
-        .staging-table th { 
-            background: #34495e; color: white; padding: 10px; 
-            position: sticky; top: 0; z-index: 10; text-align: left; white-space: nowrap; 
+        /* --- PERBAIKAN TAMPILAN BARIS CUSTOM INPUT --- */
+        #dynamic-fields-area { margin-top: 10px; }
+        .dynamic-row { 
+            display: flex; 
+            gap: 15px; 
+            margin-bottom: 10px; 
+            align-items: center; /* Agar vertikal sejajar tengah */
         }
-        
-        .del-col-btn {
-            color: #ff9999; cursor: pointer; margin-left: 8px; font-weight: bold; font-size: 14px;
-            text-decoration: none; padding: 2px 5px; border-radius: 3px;
+        .dynamic-row input {
+            flex: 1; /* Input Label & Isi berbagi lebar sama */
         }
-        .del-col-btn:hover { background: rgba(255,255,255,0.2); color: white; }
-
-        .staging-table td { border-bottom: 1px solid #eee; padding: 0; min-width: 100px; transition: background 0.3s; }
-        
-        /* Highlight Error Row */
-        .row-error td { background-color: #ffe6e6 !important; border-bottom: 1px solid #ffcccc; }
-        .row-error input, .row-error select { background-color: rgba(255,255,255,0.5); }
-
-        /* Input seamless */
-        .tbl-input { width: 100%; border: none; padding: 8px; background: transparent; font-family: inherit; font-size: 12px; }
-        .tbl-input:focus { background: #fffbe6; outline: 2px solid #f1c40f; }
-        
-        select.tbl-input { cursor: pointer; appearance: none; -webkit-appearance: none; padding-right: 15px; }
-
-        /* Delete Row Button */
-        .btn-del-row {
-            background: #e74c3c; color: white; border: none; border-radius: 3px;
-            width: 20px; height: 20px; line-height: 18px; text-align: center;
-            cursor: pointer; font-size: 10px; display: inline-block; margin-right: 5px;
+        .btn-sm-del { 
+            background: #e74c3c; 
+            color: white; 
+            border: none; 
+            width: 40px; 
+            height: 40px; /* Tinggi sama dengan input */
+            border-radius: 5px; 
+            cursor: pointer; 
+            font-weight: bold;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
         }
-        .btn-del-row:hover { background: #c0392b; }
+        .btn-sm-del:hover { background: #c0392b; }
 
-        .staging-controls { background: #fff3cd; padding: 15px; border: 1px solid #ffeeba; border-bottom: none; border-radius: 5px 5px 0 0; }
-        .bulk-bar { display: flex; gap: 10px; align-items: center; padding-bottom: 10px; border-bottom: 1px dashed #d4ac0d; margin-bottom: 10px; flex-wrap: wrap; }
-        .bulk-label { font-weight: bold; color: #7f6000; font-size: 13px; display: flex; align-items: center; gap: 5px; }
+        /* --- 3. TOMBOL --- */
+        .btn { border: none; padding: 0 20px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px; display: inline-flex; justify-content: center; align-items: center; gap: 6px; transition: all 0.2s ease-in-out; height: 40px; white-space: nowrap; width: 100%; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .btn:hover { transform: translateY(-2px); filter: brightness(110%); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
+        .btn:active { transform: translateY(1px); box-shadow: none; filter: brightness(90%); }
+        .c-blue { background: #2980b9; color: white; } .c-green { background: #27ae60; color: white; } .c-red { background: #c0392b; color: white; }
+        .c-orange { background: #d35400; color: white; } .c-grey { background: #7f8c8d; color: white; } .c-purple { background: #8e44ad; color: white; } .c-teal { background: #16a085; color: white; }
 
-        .btn { padding: 10px 15px; border: none; cursor: pointer; color: white; border-radius: 4px; font-weight: bold; font-size: 13px; transition: 0.2s; white-space: nowrap; display: inline-flex; justify-content: center; align-items: center; }
-        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
-        .c-blue { background: #2980b9; } .c-green { background: #27ae60; } .c-orange { background: #f39c12; }
-        .c-red { background: #c0392b; } .c-purple { background: #8e44ad; } .c-grey { background: #7f8c8d; }
+        .action-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-top: 15px; }
+        .toolbar-grid { display: grid; grid-template-columns: auto auto auto 1fr; gap: 15px; align-items: center; background: #f1f3f5; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #e9ecef; }
+        .input-group { display: flex; align-items: stretch; }
+        .input-group input { border-top-right-radius: 0; border-bottom-right-radius: 0; height: 40px; }
+        .input-group button { border-top-left-radius: 0; border-bottom-left-radius: 0; width: auto; padding: 0 20px; height: 40px; margin: 0; }
 
-        .action-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; }
-        .action-grid button { width: 100%; }
-        .staging-action-bar { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; gap: 10px; flex-wrap: wrap; }
+        /* --- 4. TABLE EDITOR --- */
+        .staging-area { border: 1px solid #ccc; border-radius: 8px; background: white; margin-bottom: 30px; display: flex; flex-direction: column; overflow: hidden; }
+        .table-wrapper { max-height: 500px; overflow: auto; width: 100%; border-bottom: 1px solid #ccc; position: relative; }
+        table.staging-table { border-collapse: separate; border-spacing: 0; table-layout: fixed; width: max-content; min-width: 100%; }
+        th { background: #34495e; color: white; padding: 10px; text-align: left; border-bottom: 1px solid #2c3e50; border-right: 1px solid #4a6278; position: sticky; top: 0; z-index: 10; font-size: 12px; white-space: nowrap; height: 40px; box-sizing: border-box; }
+        td { border-bottom: 1px solid #eee; border-right: 1px solid #eee; padding: 4px; vertical-align: middle; background: #fff; box-sizing: border-box; }
+        .tbl-input { border: 1px solid transparent; background: transparent; padding: 5px 8px; width: 100%; height: 30px; font-size: 12px; box-sizing: border-box; border-radius: 3px; }
+        .tbl-input:focus { background: white; border: 1px solid #3498db; outline: none; }
+        .row-error td { background: #ffebee !important; } .row-dup td { background: #fff8e1 !important; }
+        .del-col-btn { background: #e74c3c; color: white; padding: 1px 5px; border-radius: 3px; font-size: 9px; cursor: pointer; margin-left: 5px; opacity: 0.8; }
+        .row-del-btn { background: none; border: none; color: #e74c3c; cursor: pointer; font-size: 14px; font-weight: bold; width: 100%; }
 
-        #dynamic-fields-area { margin-top: 10px; border-top: 1px dashed #ccc; padding-top: 10px; }
-        .dynamic-row { display: flex; gap: 10px; margin-bottom: 8px; align-items: flex-end; }
-        .btn-sm-del { background: #e74c3c; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; width: auto; }
+        /* --- 5. CARD DESIGN (KARTU INDUK FIXED) --- */
+        .kartu-induk { width: 12.5cm; min-height: 7.5cm; border: 1px solid #000; padding: 10px 15px; box-sizing: border-box; font-family: "Times New Roman", Times, serif; font-size: 10pt; background: white; display: flex; flex-direction: column; color: #000; position: relative; }
+        .header-jenis { font-size: 9pt; width: 100%; margin-bottom: 5px; color: #555; }
+        .k-head { text-align: center; border-bottom: 3px double #000; padding-bottom: 5px; margin-bottom: 10px; margin-right: 0; }
+        
+        .tbl-kartu { width: 100%; border-collapse: collapse; margin-bottom: 5px; table-layout: fixed; /* Fixed layout agar tab rapi */ }
+        .tbl-kartu td { vertical-align: top; padding: 3px 0; border: none; }
+        
+        /* Lebar Kolom Kartu Induk Diperbaiki */
+        .k-label-col { width: 90px; white-space: nowrap; overflow: hidden; } 
+        .k-sep-col { width: 15px; text-align: center; font-weight: bold; } 
+        .k-val-col { text-align: justify; width: auto; }
 
-        #preview-section { width: 100%; max-width: 21cm; margin: 0 auto; background: #fff; min-height: 200px; padding: 20px; border: 2px dashed #bbb; display: flex; flex-wrap: wrap; align-content: flex-start; gap: 10px; }
-        .placeholder-text { width: 100%; text-align: center; color: #aaa; padding-top: 50px; font-style: italic; }
+        /* Styling Font Kartu Induk */
+        .k-lbl-txt { font-weight: bold; display: block; line-height: 1.2; font-size: 10pt; }
+        .k-eng-txt { font-size: 8pt; font-style: italic; font-weight: normal; color: #444; display: block; line-height: 1.1; margin-top: 0; }
+        .k-val-txt { display: inline-block; font-size: 10pt; }
+        
+        .inline-group { display: flex; width: 100%; gap: 15px; margin-top: 2px; }
+        .inline-item { flex: 1; min-width: 0; }
+        .inline-label { font-weight: bold; }
+        .inline-eng { font-size: 8pt; font-style: italic; font-weight: normal; color: #444; display: block; margin-top: -2px; }
 
-        .print-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: #2c3e50; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 -2px 10px rgba(0,0,0,0.2); z-index: 1000; }
+        /* --- 6. LABEL & BARCODE --- */
+        .sticker-common { border: 1px solid #000 !important; background: white; box-sizing: border-box; }
+        .sticker-unit { display: inline-flex; padding: 0; align-items: stretch; height: 4cm; }
+        .spine-box { width: 3cm; height: 4cm; display: flex; flex-direction: column; text-align: center; border: 1px solid #000; box-sizing: border-box; }
+        .color-strip { height: 15px; border-bottom: 1px solid black; width: 100%; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .spine-text { flex: 1; display: flex; flex-direction: column; justify-content: center; font-weight: bold; font-family: Arial, sans-serif; font-size: 14pt; }
+        .barcode-box { width: 5cm; height: 4cm; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 2px; overflow: hidden; border: 1px solid #000; box-sizing: border-box; }
+        .barcode-box svg { width: 90%; height: 35px; display: block; margin: 2px 0; }
+        .barcode-title { font-size: 9pt; white-space: nowrap; overflow: hidden; width: 100%; text-align: center; }
+        .sticker-unit .spine-box { border-right: none; } 
+
+        /* --- EXTRAS --- */
+        .feedback-section { margin-top: 30px; border-top: 2px solid #f0f0f0; padding-top: 20px; }
+        .feedback-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 15px; background: #fff; border: 1px solid #eee; border-radius: 8px; }
+        .main-footer { text-align: center; color: #7f8c8d; font-size: 13px; margin-top: 30px; padding-bottom: 20px; border-top: 1px solid #ddd; padding-top: 20px; }
+        .main-footer a { color: #3498db; text-decoration: none; font-weight: bold; }
+        #settings-box { display: none; background: #fff; padding: 20px; border: 1px solid #ddd; margin-bottom: 20px; border-radius: 8px; }
+        .logo-preview-area { margin-top:10px; text-align: center; border: 1px dashed #ccc; padding: 5px; }
+        .print-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: #2c3e50; color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; z-index: 1000; box-sizing: border-box; }
+        #preview-section { background: white; border: 2px dashed #bdc3c7; min-height: 200px; margin-top: 20px; padding: 30px; display: flex; flex-wrap: wrap; align-content: flex-start; gap: 10px; border-radius: 8px; }
+        .print-item-wrapper { position: relative; display: inline-block; vertical-align: top; margin: 5px; page-break-inside: avoid; }
+        .delete-btn { position: absolute; top: -8px; right: -8px; width: 24px; height: 24px; background: #c0392b; color: white; border-radius: 50%; text-align: center; line-height: 22px; cursor: pointer; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); z-index: 10; font-weight: bold; }
 
         @media print {
             body { background: white; padding: 0; margin: 0; }
-            .container, .print-bar, .delete-btn { display: none !important; }
-            #preview-section { border: none; width: 100%; max-width: 100%; margin: 0; padding: 0; display: block; }
-            .print-item-wrapper { float: left; margin: 5px; page-break-inside: avoid; }
-            @page { margin: 0.5cm; size: auto; }
+            .container, .print-bar, .main-footer, .feedback-section, .no-print { display: none !important; }
+            #preview-section { border: none; width: 100%; margin: 0; padding: 0; display: block; position: absolute; top: 0; left: 0; }
+            .print-item-wrapper { float: left; margin: 0 10px 15px 0; break-inside: avoid; }
+            .delete-btn { display: none; }
+            .layout-grid-3col { display: grid !important; grid-template-columns: repeat(3, 1fr); gap: 5mm; }
+            .layout-grid-3col .print-item-wrapper { margin: 0 !important; width: auto; }
+            @page { margin: 1cm; size: auto; }
         }
-
-        .print-item-wrapper { position: relative; display: inline-block; vertical-align: top; margin: 5px; }
-        .delete-btn { position: absolute; top: -8px; right: -8px; background: red; color: white; border-radius: 50%; width: 20px; height: 20px; text-align: center; line-height: 20px; cursor: pointer; font-weight: bold; font-size: 12px; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); z-index: 10; }
-
-        .kartu-induk { width: 12cm; min-height: 9.5cm; height: auto; border: 1px solid black; padding: 15px; font-family: "Times New Roman", serif; font-size: 11pt; background: white; box-sizing: border-box; display: flex; flex-direction: column; }
-        .tbl-data { width: 100%; border-collapse: collapse; margin-top: 5px; }
-        .tbl-data td { vertical-align: top; padding: 3px 0; } 
-        .col-lbl { font-weight: bold; width: 22%; line-height: 1.2; } .col-sep { width: 2%; text-align: center; } .col-val { width: 76%; border-bottom: 1px dotted #ccc; }
-        
-        .eng { display: block; font-size: 8pt; font-style: italic; color: #555; font-weight: normal; margin-top: 2px; }
-        .combo-row { display: flex; width: 100%; border-bottom: 1px dotted #ccc; padding-bottom: 2px; }
-        .combo-item { flex: 1; margin-right: 5px; }
-        .combo-label { font-weight: bold; font-size: 11pt; } .combo-eng { font-size: 8pt; font-style: italic; color: #555; display: block; line-height: 1; }
-
-        .sticker-unit { display: inline-flex; border: 1px dashed #ccc; padding: 3px; background: white; align-items: center; gap: 3px; }
-        .spine-label { width: 3cm; height: 4cm; border: 1px solid black; display: flex; flex-direction: column; text-align: center; }
-        .color-strip { height: 12px; border-bottom: 1px solid #ccc; width: 100%; -webkit-print-color-adjust: exact; }
-        .lbl-content { flex: 1; display: flex; flex-direction: column; justify-content: center; font-weight: bold; font-family: Arial; }
-        
-        .barcode-box { 
-            width: 4.5cm; height: 4cm; border: 1px solid black; 
-            display: flex; flex-direction: column; justify-content: center; align-items: center; 
-            text-align: center; padding: 2px; background: white; overflow: hidden;
-        }
-        .barcode-box svg { display: block; width: 95%; min-height: 40px; margin: 5px 0; }
-        .barcode-title { font-size: 9pt; white-space: nowrap; overflow: hidden; width: 100%; text-align: center; margin-top: 2px; } 
     </style>
 </head>
 <body>
 
 <div class="container">
     <h2>
-        BiblioPrint <span style="font-size:14px;color:#7f8c8d;">(by dimassaputra@upi.edu)</span>
-        <span style="font-size:14px; color:#3498db; cursor: pointer; text-decoration: underline;" onclick="toggleSettings()">⚙️ Pengaturan Kopsurat</span>
+        <span>BiblioPrint <span style="font-size:14px;color:#7f8c8d;">(web app)</span></span>
+        <button class="btn c-grey" style="width:auto;" onclick="toggleSettings()">⚙️ Pengaturan Kop</button>
     </h2>
 
     <div id="settings-box">
-        <b style="color:#e67e22;">Edit Kop & Label</b>
+        <h4 style="margin-top:0;">Identitas Perpustakaan</h4>
         <div class="form-row">
-            <div class="form-col"><label>Nama Instansi 1</label><input type="text" id="conf_instansi_1" value="UPT PERPUSTAKAAN" oninput="saveConfig()"></div>
-            <div class="form-col"><label>Nama Instansi 2</label><input type="text" id="conf_instansi_2" value="POLITEKNIK NEGERI BANDUNG" oninput="saveConfig()"></div>
+            <div class="form-col"><label>Instansi Baris 1</label><input type="text" id="conf_instansi_1" value="UPT PERPUSTAKAAN" oninput="saveConfig()"></div>
+            <div class="form-col"><label>Instansi Baris 2</label><input type="text" id="conf_instansi_2" value="POLITEKNIK NEGERI BANDUNG" oninput="saveConfig()"></div>
         </div>
         <div class="form-row">
             <div class="form-col"><label>Label Punggung</label><input type="text" id="conf_label" value="POLBAN" oninput="saveConfig()"></div>
-            <div class="form-col"><label>Barcode Header</label><input type="text" id="conf_barcode" value="UPT Perpustakaan" oninput="saveConfig()"></div>
+            <div class="form-col"><label>Header Barcode</label><input type="text" id="conf_barcode" value="Milik Perpustakaan" oninput="saveConfig()"></div>
+            <div class="form-col"><label>Logo</label><input type="file" id="logoInput" accept="image/*" onchange="handleLogoUpload()"></div>
         </div>
+        <div id="logoPreview" class="logo-preview-area" style="display:none;"></div>
     </div>
 
-    <div class="io-box">
-        <div style="flex:2; min-width: 300px;">
-            <b>Mode Input Data (Spreadsheet):</b><br>
-            <small style="color:#555;">Import CSV atau Edit langsung di tabel.</small>
+    <div class="io-box no-print">
+        <div style="flex:2; min-width:300px;">
+            <label>Import Data SLiMS (CSV)</label>
+            <div class="input-group">
+                <input type="file" id="csvFileInput" accept=".csv" style="padding:10px; height:40px; min-width:250px;">
+                <button class="btn c-green" onclick="processCSV()">📂 Load</button>
+            </div>
+            <small style="color:#666; display:block; margin-top:5px;">*Gunakan file <code>.csv</code> standar dari SLiMS.</small>
         </div>
-        
-        <div style="flex:1; min-width: 150px;">
-            <label style="margin-bottom:2px;">Default Import:</label>
-            <select id="importType" style="padding:6px;">
-                <option value="a">a. Textbook</option>
-                <option value="b">b. Reference</option>
-                <option value="c">c. Catalog</option>
-                <option value="d">d. Journal</option>
-                <option value="e">e. Periodical</option>
-                <option value="f">f. Lainnya</option>
+        <div style="flex:1; min-width:200px;">
+            <label>Jenis Koleksi Default</label>
+            <select id="importType">
+                <option value="a">Textbook</option><option value="b">Reference</option><option value="c">Catalog</option>
+                <option value="d">Journal</option><option value="e">Periodical</option><option value="f">Lainnya</option>
             </select>
         </div>
-
-        <div style="flex:1; min-width: 250px; display:flex; gap:5px; align-items: flex-end;">
-            <input type="file" id="csvFileInput" accept=".csv" style="padding:5px; background:white; border:1px solid #ccc;">
-            <button class="btn c-green" onclick="processCSV()">📂 Import</button>
-        </div>
     </div>
 
-    <div id="staging-controls" class="staging-controls" style="display:block;">
-        <div class="bulk-bar">
-            <div class="bulk-label">📝 TABEL EDITOR:</div>
+    <div class="staging-controls no-print">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1px solid #ddd; padding-bottom:10px;">
+            <b style="color:#34495e;">TABEL EDITOR</b>
+            <input type="text" id="tableSearch" placeholder="🔍 Cari Judul / Barcode..." onkeyup="filterTable()" style="width:250px;">
+        </div>
+
+        <div class="toolbar-grid">
+            <div class="input-group" style="display:flex; width:auto;">
+                <input type="number" id="row-count-input" value="1" min="1" style="width:60px; border-radius:4px 0 0 4px; text-align:center;">
+                <button class="btn c-purple" style="border-radius:0 4px 4px 0; width:auto;" onclick="addCustomRows()">+ Baris</button>
+            </div>
             
-            <button class="btn c-purple" onclick="addEmptyRows(5)">+ 5 Baris Kosong</button>
-            <button class="btn c-grey" onclick="addCustomColumn()">+ Kolom Baru</button>
+            <button class="btn c-teal" style="width:auto;" onclick="autoGenerateCallNo()">🪄 Auto Call No</button>
+            <button class="btn c-grey" style="width:auto;" onclick="addCustomColumn()">+ Kolom</button>
 
             <div style="border-left:1px solid #aaa; margin:0 10px; padding-left:10px; display:flex; gap:5px; align-items:center;">
-                <span style="font-size:12px; font-weight:bold;">Edit Massal:</span>
-                <select id="bulk-target-field" style="width:120px;" onchange="updateBulkInputType()">
-                    <option value="type">Jenis Koleksi</option>
-                    <option value="barcode">No. Barcode</option>
-                    <option value="resource">Sumber</option>
-                    <option value="date">Tanggal</option>
-                    <option value="publisher">Penerbit</option>
-                    <option value="city">Kota</option>
-                </select>
-                <span id="bulk-input-container">
-                    <input type="text" id="bulk-value-input" placeholder="Isi..." style="width:120px;">
-                </span>
-                <button class="btn c-orange" onclick="applyBulkAction()">Set</button>
+                <select id="bulk-target-field" style="width:120px;" onchange="updateBulkInputType()"><option value="type">Jenis</option></select>
+                <span id="bulk-input-container"><input type="text" id="bulk-value-input" style="width:120px;"></span>
+                <button class="btn c-orange" style="width:auto;" onclick="applyBulkAction()">Set</button>
             </div>
         </div>
 
-        <div class="staging-action-bar">
-            <div><b>Total Data:</b> <span id="staging-count">0</span> item.</div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; margin-top:15px;">
+            <div>Data: <span id="staging-count">0</span> item.</div>
             <div style="display:flex; gap:5px;">
-                <select id="bulk-mode" style="width:auto; padding:8px;">
+                <select id="bulk-mode" style="width:auto;">
                     <option value="gabung">Label + Barcode</option>
                     <option value="kartu">Kartu Induk</option>
                     <option value="label">Label Punggung Saja</option>
                     <option value="barcode">Barcode Saja</option>
                 </select>
-                <button class="btn c-blue" onclick="generateFromStaging()">⬇️ Generate</button>
-                <button class="btn c-red" onclick="clearStaging()">Hapus Semua</button>
+                <button class="btn c-blue" style="width:auto;" onclick="generateFromStaging()">⬇️ Generate</button>
+                <button class="btn c-red" style="width:auto;" onclick="deleteSelectedRows()">❌ Hapus Pilihan</button>
+                <button class="btn c-grey" style="width:auto;" onclick="clearStaging()">Reset</button>
             </div>
         </div>
     </div>
 
-    <div id="staging-wrapper" class="staging-wrapper">
-        <table class="staging-table" id="staging-table">
-            <thead id="staging-head"></thead>
-            <tbody id="staging-body"></tbody>
-        </table>
+    <div class="staging-area no-print">
+        <div class="table-wrapper">
+            <table class="staging-table" id="staging-table">
+                <colgroup id="staging-colgroup"></colgroup>
+                <thead id="staging-head"></thead>
+                <tbody id="staging-body"></tbody>
+            </table>
+        </div>
     </div>
 
-    <hr style="border:0; border-top:2px solid #eee; margin:20px 0;">
+    <hr style="border:0; border-top:2px solid #eee; margin:20px 0;" class="no-print">
 
-    <details>
-        <summary style="cursor:pointer; font-weight:bold; color:#2c3e50; margin-bottom:10px; font-size:16px;">Input Manual (Formulir Satu per Satu)</summary>
-        <div style="padding:15px; background:#f9f9f9; border-radius:5px; border:1px solid #eee;">
+    <details class="no-print">
+        <summary style="cursor:pointer; font-weight:bold; color:#2c3e50; margin-bottom:10px; font-size:16px;">Input Manual (Satu per Satu)</summary>
+        <div class="form-box">
             <div class="form-row">
                 <div class="form-col">
                     <label>Jenis Koleksi</label>
                     <select id="type" onchange="toggleCustomInput()">
-                        <option value="a">a. Textbook</option><option value="b">b. Reference</option>
-                        <option value="c">c. Catalog</option><option value="d">d. Journal</option>
-                        <option value="e">e. Periodical</option><option value="f">f. Lainnya</option>
+                        <option value="a">a. Textbook</option><option value="b">b. Reference</option><option value="c">c. Catalog</option>
+                        <option value="d">d. Journal</option><option value="e">e. Periodical</option><option value="f">f. Lainnya</option>
                     </select>
                     <input type="text" id="customTypeInput" placeholder="Ketik jenis..." style="display:none; margin-top:5px; background:#fffbe6; border-color:#f1c40f;">
                 </div>
                 <div class="form-col"><label>DDC (Klasifikasi)</label><input type="text" id="classNo" placeholder="600"></div>
                 <div class="form-col"><label>Call No (Label)</label><input type="text" id="callNo" placeholder="600 ABC t"></div>
             </div>
+
             <div class="form-row"><div class="form-col"><label>Penulis</label><input type="text" id="author"></div><div class="form-col" style="flex:2;"><label>Judul</label><input type="text" id="title"></div></div>
             <div class="form-row"><div class="form-col"><label>Jilid/Cet. ke</label><input type="text" id="part"></div><div class="form-col"><label>Tahun</label><input type="text" id="year"></div><div class="form-col"><label>Edisi</label><input type="text" id="edition"></div></div>
             <div class="form-row"><div class="form-col"><label>Harga</label><input type="text" id="price"></div><div class="form-col"><label>Tanggal Input</label><input type="date" id="date"></div><div class="form-col"><label>Sumber</label><input type="text" id="resource"></div></div>
             <div class="form-row"><div class="form-col"><label>Penerbit</label><input type="text" id="publisher"></div><div class="form-col"><label>Kota Terbit</label><input type="text" id="city"></div></div>
             <div class="form-row"><div class="form-col"><label>Ukuran</label><input type="text" id="measure"></div><div class="form-col"><label>Jumlah Halaman</label><input type="text" id="pages"></div></div>
 
-            <div class="form-row" style="background:#eafaf1; padding:10px; border-radius:5px; border:1px solid #abebc6;">
-                <div class="form-col"><label>No. Rek (ACC)</label><input type="text" id="accNo" placeholder="Masuk ke Kartu Induk"></div>
-                <div class="form-col"><label style="color:#d35400;">No. Barcode</label><input type="text" id="barcodeInput" placeholder="Untuk Gambar Barcode"></div>
+            <div class="form-row highlight-row">
+                <div class="form-col"><label>No. Rek (ACC)</label><input type="text" id="accNo"></div>
+                <div class="form-col"><label style="color:#d35400;">No. Barcode (Wajib)</label><input type="text" id="barcodeInput" style="border-color:#f1c40f;"></div>
                 <div class="form-col"><label>No. Inventaris</label><input type="text" id="inventaris"></div>
                 <div class="form-col"><label>ISBN/ISSN</label><input type="text" id="isbn"></div>
             </div>
+            
             <div id="dynamic-fields-area"></div>
             <button class="btn c-grey" style="width:100%; margin-top:5px; margin-bottom:15px;" onclick="addDynamicFieldManual()">+ Tambah Baris Custom</button>
+            
             <div class="action-grid">
                 <button class="btn c-blue" onclick="addManualQueue('kartu')">+ Kartu Induk</button>
                 <button class="btn c-green" onclick="addManualQueue('gabung')">+ Label & Barcode</button>
                 <button class="btn c-orange" onclick="addManualQueue('label')">+ Label Saja</button>
-                <button class="btn c-grey" onclick="addManualQueue('barcode')">+ Barcode Saja</button>
+                <button class="btn c-purple" onclick="addManualQueue('barcode')">+ Barcode Saja</button>
+            </div>
+        </div>
+    </details>
+
+    <details class="feedback-section no-print">
+        <summary style="cursor:pointer; font-weight:bold; color:#7f8c8d; margin-bottom:15px;">💬 Survei & Laporan Kendala</summary>
+        <div class="feedback-grid">
+            <div>
+                <h4>⭐ Survei Kepuasan</h4>
+                <select id="fb_rating" style="margin-bottom:5px;">
+                    <option value="5">⭐⭐⭐⭐⭐ - Sangat Puas</option>
+                    <option value="4">⭐⭐⭐⭐ - Puas</option>
+                    <option value="3">⭐⭐⭐ - Cukup</option>
+                    <option value="2">⭐⭐ - Kurang</option>
+                    <option value="1">⭐ - Sangat Kurang</option>
+                </select>
+                <textarea id="fb_survey" style="width:100%; height:60px;" placeholder="Saran Anda..."></textarea>
+                <button class="btn c-teal" style="margin-top:5px; width:auto;" onclick="sendFeedback('survey')">Kirim Email</button>
+            </div>
+            <div>
+                <h4>🐞 Lapor Bug</h4>
+                <textarea id="fb_bug" style="width:100%; height:90px;" placeholder="Jelaskan kendala..."></textarea>
+                <button class="btn c-red" style="margin-top:5px; width:auto;" onclick="sendFeedback('bug')">Lapor Bug</button>
             </div>
         </div>
     </details>
 </div>
 
-<h3 style="text-align:center; color:#555; margin-top:30px;">Preview Siap Cetak</h3>
+<div class="no-print" style="margin-top:30px; display:flex; justify-content:space-between; align-items:flex-end; max-width:1200px; margin:20px auto;">
+    <h3 style="margin:0; color:#555;">Preview Siap Cetak</h3>
+    <div>
+        <label style="font-size:11px;">Tata Letak Cetak:</label>
+        <select id="print-layout" onchange="updateLayout()" style="padding:5px; border:1px solid #3498db; width:200px;">
+            <option value="normal">Normal (Mengalir)</option>
+            <option value="grid3">Grid 3 Kolom (Stiker A4)</option>
+        </select>
+    </div>
+</div>
+
 <div id="preview-section"><div class="placeholder-text">Hasil generate akan muncul di sini...</div></div>
+
+<div class="main-footer no-print">
+    <p><b>BiblioPrint System V33</b> &copy; 2024 - 2026. All Rights Reserved.</p>
+    <p>Contact Person: <a href="mailto:dimassaputra@upi.edu">dimassaputra@upi.edu</a></p>
+</div>
 
 <div class="print-bar">
     <div style="padding-left:20px; font-weight:bold;">Total: <span id="count">0</span> Item</div>
-    <div>
-        <button class="btn c-grey" onclick="exportToCSV()">📥 Export SLiMS Compatible</button>
-        <button class="btn c-red" onclick="resetPreview()">Reset</button>
-        <button class="btn c-blue" style="font-size:16px; padding: 10px 25px;" onclick="window.print()">🖨️ CETAK SEKARANG</button>
+    <div style="display:flex; gap:10px;">
+        <button class="btn c-grey" style="width:auto;" onclick="exportToCSV()">📥 Export SLiMS</button>
+        <button class="btn c-red" style="width:auto;" onclick="resetPreview()">Reset</button>
+        <button class="btn c-blue" style="font-size:16px; width:auto; padding:0 30px;" onclick="window.print()">🖨️ CETAK SEKARANG</button>
     </div>
 </div>
 
 <script>
-    let stagingData = []; 
-    let printQueue = [];
-    let errorIndices = new Set(); // Menyimpan index baris yang error
-
+    let stagingData = []; let printQueue = [];
+    let errorIndices = new Set(); let duplicateIndices = new Set();
+    let logoDataUrl = "";
+    
     const fieldMapping = {
-        "ukuran":"measure", "halaman":"pages", "jumlah halaman":"pages", "fisik":"pages",
-        "jilid":"part", "edisi":"edition", "tahun":"year", "kota":"city", "penerbit":"publisher",
-        "harga":"price", "sumber":"resource", "isbn":"isbn", "issn":"isbn"
+        "tahun": "year", "thn": "year", "year": "year",
+        "jilid": "part", "vol": "part", "part": "part", "cetakan": "part", "cet": "part",
+        "edisi": "edition", "edition": "edition",
+        "penerbit": "publisher", "publisher": "publisher",
+        "kota": "city", "tempat": "city", "city": "city",
+        "halaman": "pages", "hlm": "pages", "pages": "pages",
+        "ukuran": "measure", "tinggi": "measure", "fisik": "measure", "measure": "measure",
+        "isbn": "isbn", "issn": "isbn",
+        "harga": "price", "price": "price",
+        "sumber": "resource", "asal": "resource", "resource": "resource",
+        "tanggal": "date", "tgl": "date", "date": "date"
     };
 
     const typeOptions = [
-        {v:'a', t:'Textbook'}, {v:'b', t:'Reference'}, {v:'c', t:'Catalog'},
-        {v:'d', t:'Journal'}, {v:'e', t:'Periodical'}, {v:'f', t:'Lainnya'}
+        {v:'a',t:'Textbook'}, {v:'b',t:'Reference'}, {v:'c',t:'Catalog'}, 
+        {v:'d',t:'Journal'}, {v:'e',t:'Periodical'}, {v:'f',t:'Lainnya'}
     ];
-
+    
+    // DEFINISI KOLOM DENGAN LEBAR FIXED (Dalam Pixel)
     let activeColumns = [
-        {id:'type', label:'Jenis', w:'12%'},
-        {id:'title', label:'Judul', w:'20%'},
-        {id:'author', label:'Penulis', w:'15%'},
-        {id:'accNo', label:'No. Rek (ACC)', w:'10%'},
-        {id:'barcode', label:'No. Barcode', w:'10%'},
-        {id:'inventaris', label:'Inventaris', w:'10%'},
-        {id:'classNo', label:'DDC', w:'8%'},
-        {id:'callNo', label:'Call No', w:'10%'},
-        {id:'resource', label:'Sumber', w:'10%'},
-        {id:'date', label:'Tanggal', w:'10%'}
+        {id:'type',label:'Jenis',w:80}, 
+        {id:'title',label:'Judul',w:250}, 
+        {id:'author',label:'Penulis',w:150}, 
+        {id:'part',label:'Jilid',w:60},
+        {id:'edition',label:'Edisi',w:60},
+        {id:'year',label:'Tahun',w:60},
+        {id:'publisher',label:'Penerbit',w:120},
+        {id:'city',label:'Kota',w:100},
+        {id:'isbn',label:'ISBN',w:100},
+        {id:'price',label:'Harga',w:90},
+        {id:'pages',label:'Hlm',w:60},
+        {id:'measure',label:'Ukuran',w:70},
+        {id:'classNo',label:'DDC',w:60}, 
+        {id:'callNo',label:'Call No',w:100}, 
+        {id:'barcode',label:'Barcode',w:120}, 
+        {id:'accNo',label:'ACC',w:80}, 
+        {id:'inventaris',label:'Inv.',w:80}, 
+        {id:'date',label:'Tanggal',w:100}
     ];
 
     window.onload = function() {
-        ['conf_instansi_1','conf_instansi_2','conf_label','conf_barcode'].forEach(id => {
-            if(localStorage.getItem(id)) document.getElementById(id).value = localStorage.getItem(id);
-        });
-        updateBulkDropdown();
-        updateBulkInputType();
-        renderStagingTable();
-    }
-    function saveConfig() {
-        ['conf_instansi_1','conf_instansi_2','conf_label','conf_barcode'].forEach(id => {
-            localStorage.setItem(id, document.getElementById(id).value);
-        });
-    }
-    function toggleSettings() {
-        const el = document.getElementById('settings-box');
-        el.style.display = (el.style.display === 'block') ? 'none' : 'block';
-    }
-    function toggleCustomInput() {
-        const ts = document.getElementById('type');
-        const customInput = document.getElementById('customTypeInput');
-        customInput.style.display = (ts.value === 'f') ? 'block' : 'none';
-        if(ts.value === 'f') customInput.focus();
+        ['conf_instansi_1','conf_instansi_2','conf_label','conf_barcode'].forEach(id => { if(localStorage.getItem(id)) document.getElementById(id).value = localStorage.getItem(id); });
+        if(localStorage.getItem('conf_logo')) { logoDataUrl = localStorage.getItem('conf_logo'); showLogoPreview(); }
+        
+        const draft = localStorage.getItem('biblio_draft_v33');
+        if(draft) { 
+            if(confirm("Pulihkan sesi sebelumnya?")) { stagingData = JSON.parse(draft); } 
+            else { localStorage.removeItem('biblio_draft_v33'); }
+        }
+        updateBulkDropdown(); updateBulkInputType(); renderStagingTable();
+        document.getElementById('date').value = new Date().toISOString().split('T')[0];
     }
 
-    // --- BULK TOOL ---
-    function updateBulkInputType() {
-        const target = document.getElementById('bulk-target-field').value;
-        const container = document.getElementById('bulk-input-container');
-        let html = '';
-        if(target === 'date') html = `<input type="date" id="bulk-value-input" style="width:120px;">`;
-        else if (target === 'type') {
-            let opts = typeOptions.map(o => `<option value="${o.v}">${o.t}</option>`).join('');
-            html = `<select id="bulk-value-input" style="width:120px;">${opts}</select>`;
-        } else html = `<input type="text" id="bulk-value-input" placeholder="Isi nilai baru..." style="width:120px;">`;
-        container.innerHTML = html;
+    function saveConfig() { ['conf_instansi_1','conf_instansi_2','conf_label','conf_barcode'].forEach(id => localStorage.setItem(id, document.getElementById(id).value)); }
+    function handleLogoUpload() {
+        const file = document.getElementById('logoInput').files[0]; if(!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) { logoDataUrl = e.target.result; localStorage.setItem('conf_logo', logoDataUrl); showLogoPreview(); }
+        reader.readAsDataURL(file);
     }
+    function showLogoPreview() { document.getElementById('logoPreview').style.display='block'; document.getElementById('logoPreview').innerHTML=`<img src="${logoDataUrl}" class="logo-img"><br><small onclick="removeLogo()" style="color:red;cursor:pointer;">[Hapus]</small>`; }
+    function removeLogo() { localStorage.removeItem('conf_logo'); logoDataUrl=""; document.getElementById('logoInput').value=""; document.getElementById('logoPreview').style.display='none'; }
+    function saveToDraft() { localStorage.setItem('biblio_draft_v33', JSON.stringify(stagingData)); }
+    function toggleSettings() { const el=document.getElementById('settings-box'); el.style.display=(el.style.display==='block')?'none':'block'; }
 
-    function addEmptyRows(count) {
-        const selectedType = document.getElementById('importType').value;
-        const today = new Date().toISOString().split('T')[0];
-        for(let i=0; i<count; i++) {
-            stagingData.push({
-                id: Date.now() + Math.random(), type: selectedType,
-                title: "", author: "", accNo: "", barcode: "", inventaris: "", classNo: "", callNo: "",
-                resource: "Input Manual", date: today, publisher: "", city: "", year: "", edition: "",
-                part: "-", measure: "-", pages: "-", price: "-"
+    // RENDER TABLE (OPTIMIZED FOR LAYOUT)
+    function renderStagingTable() {
+        checkDuplicates();
+        const th = document.getElementById('staging-head'); 
+        const tb = document.getElementById('staging-body');
+        const cg = document.getElementById('staging-colgroup');
+        
+        // 1. Build Colgroup for Widths
+        let cols = `<col style="width:30px">`; // Checkbox
+        activeColumns.forEach(c => cols += `<col style="width:${c.w}px">`);
+        cols += `<col style="width:50px">`; // Delete
+        cg.innerHTML = cols;
+
+        // 2. Build Header
+        let h = `<tr><th><input type="checkbox" onchange="toggleAll(this)"></th>`;
+        activeColumns.forEach(c => h+=`<th>${c.label} <span class="del-col-btn" onclick="removeColumn('${c.id}')">✕</span></th>`);
+        th.innerHTML = h + `<th>Hapus</th></tr>`;
+        
+        // 3. Build Body
+        let b = "";
+        const search = document.getElementById('tableSearch').value.toLowerCase();
+
+        stagingData.forEach((d,i) => {
+            let rowText = Object.values(d).join(' ').toLowerCase();
+            if(search && !rowText.includes(search)) return;
+
+            let cls = "";
+            if(!d.barcode || !d.barcode.trim()) cls = "row-error";
+            else if(duplicateIndices.has(i)) cls = "row-dup";
+
+            b += `<tr id="row-${i}" class="${cls}"><td style="text-align:center;"><input type="checkbox" class="chk-item" value="${i}"></td>`;
+            activeColumns.forEach(c => {
+                let val = d[c.id] || "";
+                if(c.id==='type') {
+                    let o = typeOptions.map(x=>`<option value="${x.v}" ${d.type===x.v?'selected':''}>${x.t}</option>`).join('');
+                    b += `<td><select class="tbl-input" onchange="upd(${i},'type',this.value)">${o}</select></td>`;
+                } else {
+                    let typ = (c.id==='date')?'date':'text';
+                    b += `<td><input type="${typ}" class="tbl-input" value="${val}" onchange="upd(${i},'${c.id}',this.value)"></td>`;
+                }
             });
-        }
-        renderStagingTable();
-    }
-
-    function addCustomColumn() {
-        const name = prompt("Nama Kolom Baru (Misal: Ukuran, Halaman):");
-        if(name) {
-            let lowerName = name.toLowerCase().trim();
-            let id = fieldMapping[lowerName] || "custom_" + name.replace(/\s+/g, '_');
-            if(activeColumns.find(c => c.id === id)) { alert("Kolom sudah ada!"); return; }
-            activeColumns.push({ id: id, label: name, w: '10%' });
-            renderStagingTable();
-            updateBulkDropdown();
-            document.getElementById('bulk-target-field').value = id;
-            updateBulkInputType();
-        }
-    }
-    function removeColumn(id) {
-        if(confirm('Hapus kolom ini dan datanya?')) {
-            activeColumns = activeColumns.filter(c => c.id !== id);
-            stagingData.forEach(d => { delete d[id]; });
-            renderStagingTable();
-            updateBulkDropdown();
-        }
+            b += `<td align="center"><button class="row-del-btn" onclick="removeRow(${i})">✕</button></td></tr>`;
+        });
+        tb.innerHTML = b;
+        document.getElementById('staging-count').innerText = stagingData.length;
     }
     
-    // --- FITUR BARU: HAPUS ROW ---
-    function removeRow(index) {
-        if(confirm("Hapus baris ini?")) {
-            stagingData.splice(index, 1);
-            // Re-calc errors indices? Better to just clear errors and re-render
-            errorIndices.clear(); 
-            renderStagingTable();
-        }
+    function upd(i,f,v) { stagingData[i][f]=v; saveToDraft(); }
+    function toggleAll(src) { document.querySelectorAll('.chk-item').forEach(c => c.checked = src.checked); }
+    function removeRow(i) { if(confirm("Hapus baris ini?")) { stagingData.splice(i,1); renderStagingTable(); saveToDraft(); } }
+    function clearStaging() { if(confirm("Hapus Semua?")) { stagingData=[]; renderStagingTable(); saveToDraft(); } }
+    function checkDuplicates() { 
+        duplicateIndices.clear(); const map={}; 
+        stagingData.forEach((d,i)=>{ 
+            if(d.barcode && d.barcode.trim()){ const c=d.barcode.trim(); if(map[c]){duplicateIndices.add(map[c]); duplicateIndices.add(i);} else map[c]=i; } 
+        }); 
+    }
+    function filterTable() { renderStagingTable(); }
+
+    function addCustomRows() {
+        const n = parseInt(document.getElementById('row-count-input').value) || 1;
+        const t = document.getElementById('importType').value;
+        for(let i=0; i<n; i++) stagingData.push({id:Date.now()+Math.random(), type:t, title:"", author:"", barcode:"", date:new Date().toISOString().split('T')[0]});
+        renderStagingTable(); saveToDraft();
+    }
+    function deleteSelectedRows() {
+        const chk = document.querySelectorAll('.chk-item:checked');
+        if(!chk.length) return alert("Pilih baris!");
+        if(!confirm(`Hapus ${chk.length} baris?`)) return;
+        const idxs = Array.from(chk).map(c=>parseInt(c.value)).sort((a,b)=>b-a);
+        idxs.forEach(i => stagingData.splice(i,1));
+        renderStagingTable(); saveToDraft();
+    }
+    
+    function autoGenerateCallNo() {
+        let count=0; 
+        stagingData.forEach(d => { 
+            if(d.author || d.title) {
+                const cls = d.classNo ? d.classNo.trim() : "000";
+                let auth = "XXX";
+                if(d.author) {
+                    const cleanAuth = d.author.replace(/[^a-zA-Z]/g,"");
+                    auth = cleanAuth.substring(0,3).toUpperCase();
+                }
+                let tit = "x";
+                if(d.title) {
+                    const cleanTitle = d.title.replace(/[^a-zA-Z]/g,"");
+                    tit = cleanTitle.substring(0,1).toLowerCase();
+                }
+                d.callNo = `${cls} ${auth} ${tit}`; 
+                count++;
+            }
+        });
+        renderStagingTable(); saveToDraft(); 
+        alert(`${count} Call Number berhasil dibuat/diperbarui.`);
     }
 
+    function addCustomColumn() { 
+        const n = prompt("Nama Kolom:"); if(!n) return;
+        const ln = n.toLowerCase(); let id = fieldMapping[ln] ? fieldMapping[ln] : "custom_" + n.replace(/\s/g,'_');
+        if(activeColumns.find(c => c.id === id)) { alert("Kolom sudah ada."); return; }
+        activeColumns.push({id: id, label: n, w:100}); 
+        renderStagingTable(); updateBulkDropdown(); saveToDraft(); 
+    }
+    function removeColumn(id) { if(confirm("Hapus kolom ini?")) { activeColumns = activeColumns.filter(c=>c.id!==id); renderStagingTable(); updateBulkDropdown(); saveToDraft(); }}
     function updateBulkDropdown() {
-        const sel = document.getElementById('bulk-target-field');
-        sel.innerHTML = `<option value="type">Jenis Koleksi</option><option value="barcode">No. Barcode</option><option value="resource">Sumber</option><option value="date">Tanggal Input</option><option value="publisher">Penerbit</option>`;
-        activeColumns.forEach(col => {
-            if(['type','barcode','resource','date'].includes(col.id)) return;
-            const opt = document.createElement('option');
-            opt.value = col.id; opt.innerText = col.label; sel.appendChild(opt);
-        });
+        const s = document.getElementById('bulk-target-field');
+        s.innerHTML = `<option value="type">Jenis</option><option value="barcode">Barcode</option><option value="resource">Sumber</option><option value="date">Tanggal</option>`;
+        activeColumns.forEach(c => { if(!['type','barcode','resource','date'].includes(c.id)) s.insertAdjacentHTML('beforeend',`<option value="${c.id}">${c.label}</option>`); });
+    }
+    function updateBulkInputType() {
+        const t = document.getElementById('bulk-target-field').value;
+        const c = document.getElementById('bulk-input-container');
+        if(t==='date') c.innerHTML=`<input type="date" id="bulk-value-input" style="width:120px;">`;
+        else if(t==='type') { let o=typeOptions.map(x=>`<option value="${x.v}">${x.t}</option>`).join(''); c.innerHTML=`<select id="bulk-value-input" style="width:120px;">${o}</select>`; }
+        else c.innerHTML=`<input type="text" id="bulk-value-input" placeholder="Isi..." style="width:120px;">`;
     }
     function applyBulkAction() {
-        const field = document.getElementById('bulk-target-field').value;
-        const val = document.getElementById('bulk-value-input').value;
-        if(!field) return;
-        if(confirm(`Ubah '${field}' menjadi '${val}' untuk ${stagingData.length} data?`)) {
-            stagingData.forEach(d => { d[field] = val; });
-            // Jika bulk edit barcode, bersihkan error
-            if(field === 'barcode' && val.trim() !== "") errorIndices.clear();
-            renderStagingTable();
-        }
+        const f = document.getElementById('bulk-target-field').value;
+        const v = document.getElementById('bulk-value-input').value;
+        const chk = document.querySelectorAll('.chk-item:checked');
+        let idxs = chk.length ? Array.from(chk).map(c=>parseInt(c.value)) : stagingData.map((_,i)=>i);
+        if(!confirm(`Ubah ${idxs.length} data?`)) return;
+        idxs.forEach(i => stagingData[i][f]=v);
+        if(f==='barcode') errorIndices.clear();
+        renderStagingTable(); saveToDraft();
     }
 
-    function parseCSVRow(row) {
-        const regex = /(?:^|,)(?:"([^"]*)"|([^",]*))/g;
-        let columns = []; let match;
-        while ((match = regex.exec(row))) { columns.push((match[1] || match[2] || "").trim()); }
-        return columns;
-    }
-    function cleanSlimsData(str) { return str ? str.replace(/[<>]/g, '').trim() : ""; }
-
+    // --- PROCESS CSV ---
     function processCSV() {
-        const fileInput = document.getElementById('csvFileInput');
-        if (!fileInput.files[0]) { alert("Pilih file CSV dulu!"); return; }
-        const selectedType = document.getElementById('importType').value;
-
+        const f = document.getElementById('csvFileInput');
+        if(!f.files[0]) return alert("Pilih CSV");
         const reader = new FileReader();
         reader.onload = function(e) {
-            const rows = e.target.result.split("\n");
+            const rows = e.target.result.split(/\r?\n/);
+            if(rows.length > 0) rows.shift(); 
             let count = 0;
-            rows.forEach((row, idx) => {
-                if(!row.trim()) return;
-                const cols = parseCSVRow(row);
-                if(idx === 0 && cols[0].toLowerCase().includes("title")) return;
+            rows.forEach((line) => {
+                if(!line.trim()) return;
+                const clean = (val) => val ? val.replace(/^"|"$/g, '').trim() : '';
+                const cleanAuth = (val) => clean(val).replace(/[<>]/g, '');
+                const cols = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                
                 if(cols.length > 5) {
-                    let auth = cleanSlimsData(cols[15]) || cleanSlimsData(cols[1]); 
-                    let itemCode = cleanSlimsData(cols[cols.length-1]) || cols[8]; 
-                    let data = {
-                        id: Date.now() + Math.random(),
-                        type: selectedType, 
-                        title: cols[0] || "", edition: cols[2] || "", isbn: cols[3] || "", 
-                        publisher: cols[4] || "", year: cols[5] || "", pages: cols[6] || "", 
-                        callNo: cols[8] || "", city: cols[10] || "", classNo: cols[11] || "", 
-                        author: auth, inventaris: itemCode, accNo: itemCode, barcode: itemCode, 
-                        price: "-", resource: "Import SLiMS", date: new Date().toISOString().split('T')[0],
-                        part: "-", measure: "-"
-                    };
-                    stagingData.push(data);
+                    let barcodeVal = clean(cols[17]) || clean(cols[18]) || clean(cols[8]) || ""; 
+                    let coll = clean(cols[6]); 
+                    let pgs = "", msr = "";
+                    if(coll) {
+                        let parts = coll.split(';');
+                        if(parts.length > 1) { pgs = parts[0].trim(); msr = parts[1].trim(); }
+                        else pgs = coll;
+                    }
+
+                    stagingData.push({
+                        id: Date.now()+Math.random(), 
+                        type: document.getElementById('importType').value,
+                        title: clean(cols[0]), 
+                        author: cleanAuth(cols[15] || cols[1]), 
+                        part: clean(cols[2]), 
+                        isbn: clean(cols[3]), 
+                        publisher: clean(cols[4]), 
+                        year: clean(cols[5]), 
+                        pages: pgs,
+                        measure: msr,
+                        callNo: clean(cols[8]), 
+                        city: clean(cols[10]), 
+                        classNo: clean(cols[11]), 
+                        barcode: barcodeVal,
+                        date: new Date().toISOString().split('T')[0]
+                    });
                     count++;
                 }
             });
-            renderStagingTable();
-            alert(`Berhasil load ${count} data.`);
-            fileInput.value = "";
-        };
-        reader.readAsText(fileInput.files[0]);
+            renderStagingTable(); saveToDraft();
+            alert(`Berhasil import ${count} data.`);
+        }; reader.readAsText(f.files[0]);
     }
 
-    function renderStagingTable() {
-        const thead = document.getElementById('staging-head');
-        const tbody = document.getElementById('staging-body');
-        
-        let headerHTML = `<tr>
-            <th width="40" style="text-align:center;"><input type="checkbox" onchange="toggleSelectAll(this)" checked></th>
-            <th width="30"></th>`; // Header untuk tombol hapus
-        activeColumns.forEach(col => { 
-            headerHTML += `<th width="${col.w}">${col.label} <span class="del-col-btn" onclick="removeColumn('${col.id}')">×</span></th>`; 
-        });
-        headerHTML += `</tr>`;
-        thead.innerHTML = headerHTML;
-
-        let bodyHTML = "";
-        stagingData.forEach((d, idx) => {
-            // Cek apakah baris ini ada di daftar error
-            const errorClass = errorIndices.has(idx) ? 'row-error' : '';
-
-            bodyHTML += `<tr id="row-${idx}" class="${errorClass}">
-                <td style="text-align:center;"><input type="checkbox" class="chk-item" value="${idx}" checked></td>
-                <td style="text-align:center;"><button class="btn-del-row" onclick="removeRow(${idx})">🗑️</button></td>`;
-            
-            activeColumns.forEach(col => {
-                let val = d[col.id] || "";
-                if(col.id === 'type') {
-                    let opts = typeOptions.map(o => `<option value="${o.v}" ${val===o.v?'selected':''}>${o.t}</option>`).join('');
-                    bodyHTML += `<td><select class="tbl-input" onchange="updateStaging(${idx}, 'type', this.value)">${opts}</select></td>`;
-                } else {
-                    let inputType = (col.id === 'date') ? 'date' : 'text';
-                    bodyHTML += `<td><input type="${inputType}" class="tbl-input" value="${val}" onchange="updateStaging(${idx}, '${col.id}', this.value)"></td>`;
-                }
-            });
-            bodyHTML += `</tr>`;
-        });
-        tbody.innerHTML = bodyHTML;
-        document.getElementById('staging-controls').style.display = 'block';
-        document.getElementById('staging-wrapper').style.display = 'block';
-        document.getElementById('staging-count').innerText = stagingData.length;
+    // --- INPUT MANUAL CUSTOM FIELD FIX ---
+    function addDynamicFieldManual() { 
+        document.getElementById('dynamic-fields-area').insertAdjacentHTML('beforeend', 
+            `<div class="dynamic-row">
+                <input class="dyn-label" placeholder="Nama Label (Contoh: Donasi)">
+                <input class="dyn-val" placeholder="Isi Data">
+                <button class="btn-sm-del" onclick="this.parentElement.remove()" title="Hapus Baris">X</button>
+            </div>`
+        ); 
     }
-
-    function updateStaging(idx, field, val) { 
-        stagingData[idx][field] = val; 
-        
-        // AUTO FIX: Jika field yang diubah adalah barcode dan tidak kosong, hilangkan merah
-        if(field === 'barcode' && val.trim() !== "") {
-            if(errorIndices.has(idx)) {
-                errorIndices.delete(idx);
-                // Langsung update class tanpa render ulang semua (agar fokus tidak hilang)
-                document.getElementById(`row-${idx}`).classList.remove('row-error');
-            }
-        }
-    }
-    function toggleSelectAll(src) { document.querySelectorAll('.chk-item').forEach(cb => cb.checked = src.checked); }
-    function clearStaging() { stagingData = []; errorIndices.clear(); renderStagingTable(); }
-
-    // --- GENERATE WITH SMART VALIDATION ---
-    function generateFromStaging() {
-        const checkboxes = document.querySelectorAll('.chk-item:checked');
-        if(checkboxes.length === 0) { alert("Pilih data dulu!"); return; }
-        const mode = document.getElementById('bulk-mode').value;
-        
-        // 1. Kumpulkan semua error terlebih dahulu
-        let currentErrors = [];
-        let cleanData = [];
-
-        checkboxes.forEach(cb => {
-            const idx = parseInt(cb.value);
-            const raw = stagingData[idx];
-            
-            // Cek kondisi error (Hanya jika mode butuh barcode)
-            if((mode==='gabung' || mode==='barcode') && (!raw.barcode || raw.barcode.trim()==="")) {
-                currentErrors.push(idx);
-            } else {
-                cleanData.push(raw);
-            }
-        });
-
-        // 2. Jika ada error, tampilkan peringatan SEKALI SAJA dan tandai merah
-        if(currentErrors.length > 0) {
-            // Update global error indices
-            currentErrors.forEach(i => errorIndices.add(i));
-            renderStagingTable(); // Render ulang untuk menampilkan warna merah
-            
-            alert(`PERHATIAN:\nTerdapat ${currentErrors.length} data yang belum memiliki Barcode.\n\nData tersebut telah ditandai dengan warna MERAH di tabel.\nSilakan isi barcode atau pilih mode 'Label Saja'.`);
-            
-            // Jangan generate yang error, tapi boleh generate yang bersih?
-            // Biasanya user ingin membetulkan dulu. Kita stop saja.
-            return; 
-        }
-
-        // 3. Jika aman, proses generate
-        cleanData.forEach(raw => {
-            let extras = [];
-            for (const key in raw) {
-                if (key.startsWith('custom_')) {
-                    const colDef = activeColumns.find(c => c.id === key);
-                    const label = colDef ? colDef.label : key;
-                    if(raw[key]) extras.push({ label: label, value: raw[key] });
-                }
-            }
-            const d = {
-                mode: mode, type: raw.type || 'a',
-                title: raw.title, author: raw.author, classNo: raw.classNo, callNo: raw.callNo,
-                inventaris: raw.inventaris, isbn: raw.isbn, publisher: raw.publisher, city: raw.city,
-                year: raw.year, edition: raw.edition, part: raw.part || "-", measure: raw.measure || "-", 
-                pages: raw.pages, price: raw.price, date: raw.date, resource: raw.resource, 
-                accNo: raw.accNo, barcode: raw.barcode,
-                customType: '', extras: extras
-            };
-            addToPreview(d);
-        });
-        document.getElementById('preview-section').scrollIntoView({behavior: "smooth"});
-    }
-
+    
+    function toggleCustomInput() { document.getElementById('customTypeInput').style.display = (document.getElementById('type').value === 'f') ? 'block' : 'none'; }
+    
+    // --- GENERATE ---
     function addManualQueue(mode) {
-        // ... (Kode sama seperti sebelumnya) ...
-        const getVal = (id) => document.getElementById(id).value || "-";
-        const typeSelect = document.getElementById('type');
-        const customTypeVal = document.getElementById('customTypeInput').value;
+        const g = (id) => document.getElementById(id).value;
+        if((mode==='gabung'||mode==='barcode') && !g('barcodeInput')) return alert("Isi Barcode!");
         
         let extras = [];
-        document.querySelectorAll('.dynamic-row').forEach(row => {
-            const l = row.querySelector('.dyn-label').value;
-            const v = row.querySelector('.dyn-val').value;
-            if(l && v) extras.push({label: l, value: v});
+        document.querySelectorAll('.dynamic-row').forEach(r => extras.push({label:r.querySelector('.dyn-label').value, value:r.querySelector('.dyn-val').value}));
+        
+        addToPreview({
+            mode:mode, type:document.getElementById('type').value, customType:g('customTypeInput'),
+            title:g('title'), author:g('author'), classNo:g('classNo'), callNo:g('callNo'),
+            publisher:g('publisher'), city:g('city'), year:g('year'), price:g('price'),
+            accNo:g('accNo'), barcode:g('barcodeInput'), inventaris:g('inventaris'), isbn:g('isbn'),
+            part:g('part'), edition:g('edition'), measure:g('measure'), pages:g('pages'),
+            date:g('date')||new Date().toISOString().split('T')[0], resource:g('resource'), extras:extras
+        });
+        updateLayout();
+    }
+
+    function generateFromStaging() {
+        const mode = document.getElementById('bulk-mode').value;
+        const checks = document.querySelectorAll('.chk-item:checked');
+        if(checks.length===0) return alert("Pilih data!");
+        
+        let errors = [];
+        checks.forEach(c => {
+            const idx = parseInt(c.value); const d = stagingData[idx];
+            if((mode==='gabung'||mode==='barcode') && (!d.barcode || !d.barcode.trim())) {
+                errors.push(idx + 1);
+            } else {
+                let extras = [];
+                Object.keys(d).forEach(k => { if(k.startsWith('custom_')) extras.push({label: activeColumns.find(col=>col.id===k).label, value: d[k]}); });
+                addToPreview({...d, mode:mode, extras:extras});
+            }
         });
 
-        const accInput = document.getElementById('accNo').value;
-        const bcInput = document.getElementById('barcodeInput').value;
-
-        if((mode==='gabung'||mode==='barcode') && !bcInput) { 
-            alert("HARAP ISI NO. BARCODE TERLEBIH DAHULU!");
-            return; 
-        }
-
-        const d = {
-            mode: mode,
-            type: typeSelect.value, customType: customTypeVal,
-            title: getVal('title'), author: getVal('author'), classNo: getVal('classNo'), callNo: getVal('callNo'),
-            inventaris: getVal('inventaris'), isbn: getVal('isbn'), publisher: getVal('publisher'), city: getVal('city'),
-            year: getVal('year'), edition: getVal('edition'), part: getVal('part'), measure: getVal('measure'), pages: getVal('pages'),
-            price: getVal('price'), date: getVal('date')==='-' ? new Date().toISOString().split('T')[0] : getVal('date'),
-            resource: getVal('resource'), 
-            accNo: accInput, 
-            barcode: bcInput,
-            extras: extras
-        };
-        addToPreview(d);
+        if(errors.length > 0) alert(`Peringatan: Baris ke-${errors.join(', ')} dilewati karena Barcode kosong.`);
+        document.getElementById('preview-section').scrollIntoView({behavior:"smooth"});
+        updateLayout();
     }
 
     function addToPreview(d) {
         printQueue.push(d);
-        const uid = "item-" + Date.now() + Math.random();
-        const cfg = {
-            h1: document.getElementById('conf_instansi_1').value, h2: document.getElementById('conf_instansi_2').value,
-            lbl: document.getElementById('conf_label').value, bc: document.getElementById('conf_barcode').value
-        };
         const sec = document.getElementById('preview-section');
-        if(sec.querySelector('.placeholder-text')) sec.innerHTML = "";
+        if(sec.querySelector('.placeholder-text')) sec.innerHTML="";
+        
+        const h1 = document.getElementById('conf_instansi_1').value;
+        const h2 = document.getElementById('conf_instansi_2').value;
+        const lbl = document.getElementById('conf_label').value;
+        const bc = document.getElementById('conf_barcode').value;
+        const uid = "bc-" + Date.now() + Math.random();
 
+        let logoH = logoDataUrl ? `<div style="text-align:center;margin-bottom:5px;"><img src="${logoDataUrl}" style="max-height:40px;"></div>` : "";
         let content = "";
-        if (d.mode === 'kartu') {
-            let types = {a:"Textbook", b:"Reference", c:"Catalog", d:"Journal", e:"Periodical"};
-            if (d.type === 'f') types['f'] = d.customType || "Lainnya"; else types['f'] = ".....";
-            
-            let typeStr = Object.keys(types).map(k => `<span style="white-space:nowrap; ${k===d.type?'font-weight:bold;text-decoration:underline;color:black':'color:#bbb'}">${k}. ${types[k]}</span>`).join(" ");
-            let extraRows = d.extras.map(e => `<tr><td class="col-lbl">${e.label}</td><td class="col-sep">:</td><td class="col-val">${e.value}</td></tr>`).join("");
 
+        if(d.mode === 'kartu') {
+            let typeHtml = "";
+            const typeList = [{k:'a', v:'Textbook'}, {k:'b', v:'Reference'}, {k:'c', v:'Catalog'}, {k:'d', v:'Journal'}, {k:'e', v:'Periodical'}];
+            let parts = typeList.map(item => {
+                const style = (d.type === item.k) ? 'font-weight:bold;text-decoration:underline;color:black;' : 'color:#999;text-decoration:none;';
+                return `<span style="${style}">${item.k}. ${item.v}</span>`;
+            });
+            const isF = (d.type === 'f');
+            const fText = isF ? (d.customType || "Lainnya") : ".....";
+            const fStyle = isF ? 'font-weight:bold;text-decoration:underline;color:black;' : 'color:#999;text-decoration:none;';
+            parts.push(`<span style="${fStyle}">f. ${fText}</span>`);
+            typeHtml = parts.join("&nbsp;&nbsp; ");
+
+            /* PERBAIKAN: BARIS CUSTOM MENGGUNAKAN CLASS YG SAMA DENGAN DEFAULT */
+            let xtra = d.extras.map(e => `
+                <tr>
+                    <td class="k-label-col"><span class="k-lbl-txt">${e.label}</span></td>
+                    <td class="k-sep-col">:</td>
+                    <td class="k-val-col"><span class="k-val-txt">${e.value}</span></td>
+                </tr>
+            `).join('');
+            
             content = `
             <div class="kartu-induk">
-                <div style="font-size:9pt; width:100%;">${typeStr}</div>
-                <div style="text-align:center;font-weight:bold;margin:8px 0;">${cfg.h1}<br>${cfg.h2}</div>
-                <table class="tbl-data">
-                    <tr><td class="col-lbl">Penulis<br><span class="eng">Author</span></td><td class="col-sep">:</td><td class="col-val">${d.author}</td></tr>
-                    <tr><td class="col-lbl">Judul<br><span class="eng">Title</span></td><td class="col-sep">:</td><td class="col-val">${d.title}</td></tr>
-                    <tr><td colspan="3"><div class="combo-row"><div class="combo-item"><span class="combo-label">Jilid:</span> ${d.part} <span class="combo-eng">Part</span></div><div class="combo-item"><span class="combo-label">Thn:</span> ${d.year} <span class="combo-eng">Year</span></div><div class="combo-item"><span class="combo-label">Ed:</span> ${d.edition} <span class="combo-eng">Edition</span></div></div></td></tr>
-                    <tr><td class="col-lbl">Penerbit<br><span class="eng">Publisher</span></td><td class="col-sep">:</td><td class="col-val">${d.publisher}, ${d.city}</td></tr>
-                    <tr><td colspan="3"><div class="combo-row"><div class="combo-item"><span class="combo-label">Hrg:</span> ${d.price} <span class="combo-eng">Price</span></div><div class="combo-item"><span class="combo-label">Tgl:</span> ${d.date} <span class="combo-eng">Date</span></div><div class="combo-item"><span class="combo-label">Smbr:</span> ${d.resource} <span class="combo-eng">Source</span></div></div></td></tr>
-                    <tr><td colspan="3"><div class="combo-row"><div class="combo-item"><span class="combo-label">Ukuran:</span> ${d.measure} <span class="combo-eng">Measure</span></div><div class="combo-item"><span class="combo-label">Halaman:</span> ${d.pages} <span class="combo-eng">Pages</span></div></div></td></tr>
-                    <tr><td class="col-lbl">No. Rek<br><span class="eng">ACC No</span></td><td class="col-sep">:</td><td class="col-val"><b>${d.accNo || "-"}</b></td></tr>
-                    <tr><td class="col-lbl">ISBN</td><td class="col-sep">:</td><td class="col-val">${d.isbn}</td></tr>
-                    <tr><td class="col-lbl">Inventaris</td><td class="col-sep">:</td><td class="col-val">${d.inventaris}</td></tr>
-                    ${extraRows}
+                <div class="header-jenis">${typeHtml}</div>
+                ${logoH}
+                <div style="text-align:center;font-weight:bold;margin:5px 0;">${h1}<br>${h2}</div>
+                <table class="tbl-kartu">
+                    <tr><td class="k-label-col"><span class="k-lbl-txt">Penulis</span><span class="k-eng-txt">Author</span></td><td class="k-sep-col">:</td><td class="k-val-col"><span class="k-val-txt">${d.author||''}</span></td></tr>
+                    <tr><td class="k-label-col"><span class="k-lbl-txt">Judul</span><span class="k-eng-txt">Title</span></td><td class="k-sep-col">:</td><td class="k-val-col"><span class="k-val-txt">${d.title||''}</span></td></tr>
+                    <tr><td colspan="3"><div class="inline-group"><div class="inline-item"><span class="inline-label">Jilid/Cet. ke:</span> ${d.part||'-'} <span class="inline-eng">Part</span></div><div class="inline-item"><span class="inline-label">Tahun:</span> ${d.year||'-'} <span class="inline-eng">Year</span></div><div class="inline-item"><span class="inline-label">Edisi ke:</span> ${d.edition||'-'} <span class="inline-eng">Edition</span></div></div></td></tr>
+                    <tr><td class="k-label-col"><span class="k-lbl-txt">Penerbit</span><span class="k-eng-txt">Publisher</span></td><td class="k-sep-col">:</td><td class="k-val-col"><span class="k-val-txt">${d.publisher||''} - ${d.city||''}</span></td></tr>
+                    <tr><td colspan="3"><div class="inline-group"><div class="inline-item"><span class="inline-label">Harga:</span> ${d.price||'-'} <span class="inline-eng">Price</span></div><div class="inline-item"><span class="inline-label">Tgl:</span> ${d.date||'-'} <span class="inline-eng">Date</span></div><div class="inline-item"><span class="inline-label">Sumber:</span> ${d.resource||'-'} <span class="inline-eng">Source</span></div></div></td></tr>
+                    <tr><td colspan="3"><div class="inline-group"><div class="inline-item"><span class="inline-label">Ukuran:</span> ${d.measure||'-'} <span class="inline-eng">Measure</span></div><div class="inline-item"><span class="inline-label">Jumlah Halaman:</span> ${d.pages||'-'} <span class="inline-eng">Pages</span></div></div></td></tr>
+                    <tr><td class="k-label-col"><span class="k-lbl-txt">No. Rek</span><span class="k-eng-txt">ACC No.</span></td><td class="k-sep-col">:</td><td class="k-val-col"><b>${d.accNo||''}</b></td></tr>
+                    <tr><td class="k-label-col"><span class="k-lbl-txt">ISBN</span></td><td class="k-sep-col">:</td><td class="k-val-col"><span class="k-val-txt">${d.isbn||''}</span></td></tr>
+                    <tr><td class="k-label-col"><span class="k-lbl-txt">No. Inv</span></td><td class="k-sep-col">:</td><td class="k-val-col"><span class="k-val-txt">${d.inventaris||''}</span></td></tr>
+                    ${xtra}
                 </table>
             </div>`;
         } else {
-            const color = getDDCColor(d.classNo);
-            const lbl = `<div class="spine-label"><div class="color-strip" style="background:${color}!important;"></div><div class="lbl-content"><div style="font-size:10px;">${cfg.lbl}</div><br><div style="font-size:14pt;">${d.classNo}</div><div>${d.author.substring(0,3).toUpperCase()}</div><div>${d.title.substring(0,1).toLowerCase()}</div></div></div>`;
+            function getDDCColor(c) { const map={'0':'#8B4513','1':'#2c3e50','2':'#d35400','3':'#8e44ad','4':'#c0392b','5':'#000000','6':'#2980b9','7':'#16a085','8':'#27ae60','9':'#FFFFFF'}; return map[c&&c[0]]||"#fff"; }
+            let color = getDDCColor(d.classNo);
+            let spine = `<div class="spine-box"><div class="color-strip" style="background:${color}!important;"></div><div class="spine-text"><div style="font-size:10px;">${lbl}</div><div style="font-size:14pt;margin:5px 0;">${d.classNo||''}</div><div>${(d.author||'').substring(0,3).toUpperCase()}</div><div>${(d.title||'').substring(0,1).toLowerCase()}</div></div></div>`;
+            let bar = `<div class="barcode-box"><div style="font-size:8pt;margin-bottom:2px;">${bc}</div><svg id="${uid}"></svg><div class="barcode-title">${(d.title||'').substring(0,18)}</div></div>`;
             
-            let displayTitle = d.title;
-            if (displayTitle.length > 15) { displayTitle = displayTitle.substring(0, 15) + "..."; }
-
-            let bc = "";
-            if (d.barcode && d.barcode.trim() !== "") {
-                bc = `<div class="barcode-box">
-                        <div style="font-size:7pt;">${cfg.bc}</div>
-                        <svg id="bc-${uid}" style="width:90%; height:40px;"></svg>
-                        <div class="barcode-title">${displayTitle}</div>
-                      </div>`;
-            } else {
-                bc = `<div class="barcode-box" style="justify-content:center; color:red; font-size:10px; border:1px dotted red;">[BARCODE KOSONG]</div>`;
-            }
-
-            if(d.mode==='gabung') content = `<div class="sticker-unit">${lbl}${bc}</div>`;
-            else if(d.mode==='label') content = lbl;
-            else content = bc;
+            if(d.mode==='gabung') content = `<div class="sticker-unit sticker-common">${spine}${bar}</div>`;
+            else if(d.mode==='label') content = `<div class="sticker-unit sticker-common" style="width:3cm;">${spine}</div>`;
+            else content = `<div class="sticker-unit sticker-common" style="width:5cm; padding:0;">${bar}</div>`;
         }
 
         const wrap = document.createElement('div');
@@ -645,27 +687,22 @@
         wrap.innerHTML = `<div class="delete-btn" onclick="this.parentElement.remove();updateCount()">X</div>` + content;
         sec.appendChild(wrap);
 
-        if(d.mode!=='kartu' && d.mode!=='label' && d.barcode && d.barcode.trim() !== "") {
-            setTimeout(() => { 
-                const element = document.getElementById("bc-" + uid);
-                if(element) {
-                    try {
-                        JsBarcode(element, d.barcode, { format: "CODE128", width: 2, height: 40, displayValue: true, fontSize: 12, margin: 0 });
-                    } catch(err) { element.parentNode.innerHTML = "<span style='color:red;font-size:10px'>Error Kode</span>"; }
-                }
-            }, 200); 
+        if(d.mode!=='kartu' && d.mode!=='label' && d.barcode) {
+            setTimeout(()=> { 
+                const el = document.getElementById(uid);
+                if(el) { try { JsBarcode(el, d.barcode, {format:"CODE128", width:2, height:35, displayValue:true, fontSize:12, margin:0}); } catch(e){ el.parentNode.innerHTML="<span style='color:red;font-size:10px'>Error Kode</span>"; } }
+            }, 100);
         }
         updateCount();
     }
 
     function resetPreview() { document.getElementById('preview-section').innerHTML='<div class="placeholder-text">...</div>'; printQueue=[]; updateCount(); }
     function updateCount() { document.getElementById('count').innerText = document.querySelectorAll('.print-item-wrapper').length; }
-    function getDDCColor(c) { return {'0':'#8B4513','1':'#800080','2':'#FFA500','3':'#006400','4':'#FFC0CB','5':'#000000','6':'#FF0000','7':'#8B0000','8':'#FFFF00','9':'#FFFFFF'}[c&&c[0]] || "#fff"; }
-    function addDynamicFieldManual() { document.getElementById('dynamic-fields-area').insertAdjacentHTML('beforeend', `<div class="dynamic-row"><input class="dyn-label" placeholder="Label"><input class="dyn-val" placeholder="Isi"><button class="btn-sm-del" onclick="this.parentElement.remove()">X</button></div>`); }
+    function updateLayout() { document.getElementById('preview-section').className = (document.getElementById('print-layout').value === 'grid3') ? 'layout-grid-3col' : ''; }
     
     function exportToCSV() {
         const data = stagingData.length ? stagingData : printQueue;
-        if(!data.length) return alert("Data kosong");
+        if(!data.length) return alert("Tidak ada data untuk diexport.");
         let csvContent = '"Title","GMD","Edition","ISBN","Publisher","Year","Collation","Series Title","Call Number","Language","Place","Classification","Notes","Image","File","Author","Subject","Item Code"\n';
         data.forEach(d => {
              const row = [
@@ -680,6 +717,13 @@
         link.href = "data:text/csv;charset=utf-8," + encodeURI(csvContent);
         link.download = "slims_compatible_export.csv";
         link.click();
+    }
+
+    function sendFeedback(type) {
+        const email = "dimassaputra@upi.edu";
+        const msg = type === 'survey' ? document.getElementById('fb_rating').value + " - " + document.getElementById('fb_survey').value : document.getElementById('fb_bug').value;
+        const sub = type === 'survey' ? "Survei Kepuasan" : "Laporan Bug";
+        window.location.href = `mailto:${email}?subject=${sub}&body=${msg}`;
     }
 </script>
 </body>
